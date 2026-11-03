@@ -69,11 +69,10 @@ Unificar los motores de compresión, indexación, interpretación de instruccion
 
 Repositorios relacionados
 
-    Fedora-compresSO 
+    [Fedora-compresSO ](https://github.com/hegonhernandez-pixel/Fedora-compresSO?utm_source=chatgpt.com)
 
-    Notebook de desarrollo 
-    https://gemini.google.com/app/a74843a47f... 
-
+    [Notebook de desarrollo]
+    (https://gemini.google.com/app/a74843a47f1cfe75?hl=es_419&utm_source=chatgpt.com)
     Estado: Experimental. Sin validación integral de rendimiento ni despliegue final.
 
 
