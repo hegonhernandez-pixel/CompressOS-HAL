@@ -63,5 +63,19 @@ Please consult LICENSE-STATUS.md before reusing project materials.
 Project Philosophy
 
 Research first. Validate before claiming. Document failures. Preserve reproducibility. Build modularly.
+Objetivo
+
+Unificar los motores de compresión, indexación, interpretación de instrucciones y planificación CPU/GPU en una arquitectura modular, independiente del hardware.
+
+Repositorios relacionados
+
+    Fedora-compresSO 
+
+    Notebook de desarrollo 
+    https://gemini.google.com/app/a74843a47f... 
+
+    Estado: Experimental. Sin validación integral de rendimiento ni despliegue final.
+
+
 
 CompressOS-HAL — Experimental Linux optimization through resource intelligence and GPU compute. 
