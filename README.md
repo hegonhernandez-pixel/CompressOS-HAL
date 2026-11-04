@@ -78,3 +78,9 @@ Repositorios relacionados
 
 
 CompressOS-HAL — Experimental Linux optimization through resource intelligence and GPU compute. 
+
+
+## Integrated subsystems
+
+- **Memory management (experimental):** ZRAM/Zswap profiles, metrics collection, a read-only health supervisor, and a bounded benchmark are maintained in [`modules/memory`](modules/memory/README.md). The initial integration targets an already-installed Linux Mint XFCE system; Mint 22.3 runtime validation and custom ISO integration are not yet complete.
+- **Platform development:** Fedora-specific distribution work remains in the separate [Fedora-compresSO repository](https://github.com/hegonhernandez-pixel/Fedora-compresSO). Its `main` and `exp/fast-zram-zswap-daemons` branches are preserved independently; this repository's `main` remains the canonical CompressOS-HAL core.
