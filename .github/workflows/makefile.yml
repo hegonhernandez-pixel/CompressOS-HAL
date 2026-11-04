@@ -1,27 +1,25 @@
-name: Makefile CI
+name: CompressOS-HAL checks
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
-  build:
-
+  memory-subsystem:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-
-    - name: configure
-      run: ./configure
-
-    - name: Install dependencies
-      run: make
-
-    - name: Run check
-      run: make check
-
-    - name: Run distcheck
-      run: make distcheck
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Unit tests
+        working-directory: modules/memory
+        run: PYTHONPATH=src python -m unittest discover -s tests -v
+      - name: Compile Python
+        working-directory: modules/memory
+        run: python -m compileall -q src tests
+      - name: Shell syntax
+        working-directory: modules/memory
+        run: bash -n scripts/*.sh scripts/compressoctl
