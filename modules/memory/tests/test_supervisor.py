@@ -35,6 +35,22 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(report["issues"], [])
 
 
+    def test_missing_algorithm_telemetry_is_reported(self):
+        cfg = {"PROFILE": "zram-fast", "DEVICE": "/dev/zram0", "ALGORITHM": "lz4"}
+        for telemetry in (None, "", "  "):
+            with self.subTest(telemetry=telemetry):
+                report = inspect_health(cfg, snapshot(["/dev/zram0"], comp_algorithm=telemetry))
+                self.assertEqual(report["status"], "warning")
+                self.assertEqual(report["issues"][0]["code"], "zram_algorithm_telemetry_missing")
+
+    def test_ambiguous_algorithm_state_is_reported(self):
+        cfg = {"PROFILE": "zram-fast", "DEVICE": "/dev/zram0", "ALGORITHM": "lz4"}
+        for telemetry in ("lz4 lzo", "[] lz4", "[lz4] [lzo]", "[lz4] [lzo", "[[lz4]] lzo"):
+            with self.subTest(telemetry=telemetry):
+                report = inspect_health(cfg, snapshot(["/dev/zram0"], comp_algorithm=telemetry))
+                self.assertEqual(report["status"], "warning")
+                self.assertEqual(report["issues"][0]["code"], "zram_algorithm_state_unknown")
+
     def test_unexpected_active_zram_algorithm_is_reported_as_warning(self):
         cfg = {
             "PROFILE": "zram-fast",

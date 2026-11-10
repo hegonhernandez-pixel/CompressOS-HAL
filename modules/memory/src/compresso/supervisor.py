@@ -55,11 +55,13 @@ def inspect_health(config, metrics):
                 add("warning", "zram_algorithm_telemetry_missing",
                     f"No se pudo leer el algoritmo activo de {device}.")
             else:
-                selected_algorithm = next(
-                    (token[1:-1] for token in algorithms_text.split()
-                     if token.startswith("[") and token.endswith("]")),
-                    None,
-                )
+                marked = [token for token in algorithms_text.split()
+                          if "[" in token or "]" in token]
+                selected_algorithm = None
+                if (len(marked) == 1 and len(marked[0]) > 2
+                        and marked[0].startswith("[") and marked[0].endswith("]")
+                        and marked[0].count("[") == marked[0].count("]") == 1):
+                    selected_algorithm = marked[0][1:-1]
                 allowed_algorithms = {preferred_algorithm}
                 fallbacks = config.get("FALLBACK_ALGORITHMS", "")
                 if isinstance(fallbacks, str):
