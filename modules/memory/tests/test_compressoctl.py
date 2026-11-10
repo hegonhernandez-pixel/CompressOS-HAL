@@ -109,6 +109,8 @@ class CompressoctlProfileTests(unittest.TestCase):
         installer = (root / "scripts" / "install-mint.sh").read_text()
         self.assertIn("profile)", cli)
         self.assertIn('profilectl.py" /usr/libexec/compresso/profilectl.py', installer)
+        self.assertIn('if [[ -L /etc/compresso/memory.conf ]]', installer)
+        self.assertIn('Preservando configuración existente', installer)
 
 
 if __name__ == "__main__":
