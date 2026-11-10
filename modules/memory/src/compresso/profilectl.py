@@ -97,7 +97,15 @@ def _atomic_replace(path, content, metadata):
             stream.flush()
             os.fsync(stream.fileno())
             os.fchmod(stream.fileno(), stat.S_IMODE(metadata.st_mode))
-            os.fchown(stream.fileno(), metadata.st_uid, metadata.st_gid)
+            current_uid = os.geteuid()
+            if current_uid == 0:
+                os.fchown(stream.fileno(), metadata.st_uid, metadata.st_gid)
+            else:
+                if metadata.st_uid != current_uid:
+                    raise PermissionError("no se puede preservar el propietario del archivo")
+                temporary_gid = os.fstat(stream.fileno()).st_gid
+                if temporary_gid != metadata.st_gid:
+                    os.fchown(stream.fileno(), -1, metadata.st_gid)
         os.replace(temporary_path, path)
         directory_fd = os.open(path.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
         try:
