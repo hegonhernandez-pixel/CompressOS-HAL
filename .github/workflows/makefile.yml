@@ -2,7 +2,7 @@ name: CompressOS-HAL checks
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "recovery/import-memory-hal-2026-11-04"]
   pull_request:
   workflow_dispatch:
 
