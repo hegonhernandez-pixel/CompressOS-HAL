@@ -1,8 +1,10 @@
 [Unit]
 Description=CompressOS-HAL experimental memory configurator
 After=local-fs.target systemd-modules-load.service
-Before=swap.target
+# memoryd creates and activates its own ZRAM swap; ordering before swap.target
+# creates a systemd dependency cycle on some systemd boot graphs.
 ConditionPathExists=/etc/compresso/memory.conf
+
 [Service]
 Type=oneshot
 RemainAfterExit=yes
@@ -14,5 +16,6 @@ ProtectHome=yes
 ProtectSystem=strict
 ReadWritePaths=/sys/block /sys/module/zswap/parameters
 CapabilityBoundingSet=CAP_SYS_ADMIN
+
 [Install]
 WantedBy=multi-user.target
