@@ -13,7 +13,14 @@ install -m 0755 "$ROOT/src/compresso/benchmark.py" /usr/libexec/compresso/benchm
 install -m 0755 "$ROOT/src/compresso/supervisor.py" /usr/libexec/compresso/supervisor.py
 install -m 0755 "$ROOT/src/compresso/profilectl.py" /usr/libexec/compresso/profilectl.py
 install -m 0755 "$ROOT/scripts/compressoctl" /usr/local/bin/compressoctl
-install -m 0644 "$ROOT/config/memory.conf" /etc/compresso/memory.conf
+if [[ -L /etc/compresso/memory.conf ]]; then
+  echo "ERROR: /etc/compresso/memory.conf es un enlace simbólico; revísalo manualmente." >&2
+  exit 3
+elif [[ -e /etc/compresso/memory.conf ]]; then
+  echo "Preservando configuración existente: /etc/compresso/memory.conf"
+else
+  install -m 0644 "$ROOT/config/memory.conf" /etc/compresso/memory.conf
+fi
 printf 'zram\n' > /etc/modules-load.d/compresso-zram.conf
 install -m 0755 "$ROOT/scripts/metrics.sh" /usr/libexec/compresso/metrics.sh
 install -m 0755 "$ROOT/scripts/healthcheck.sh" /usr/libexec/compresso/healthcheck.sh
