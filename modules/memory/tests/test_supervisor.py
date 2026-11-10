@@ -7,11 +7,11 @@ from pathlib import Path
 from compresso.supervisor import inspect_health
 
 
-def snapshot(active, zram_devices=("zram0",), zswap_enabled="N"):
+def snapshot(active, zram_devices=("zram0",), zswap_enabled="N", comp_algorithm="[lz4] lzo-rle lzo"):
     return {
         "memory_kb": {"MemTotal": 4096, "MemAvailable": 2048},
         "active_swaps": [{"filename": item} for item in active],
-        "zram": {name: {"disksize_bytes": 1024} for name in zram_devices},
+        "zram": {name: {"disksize_bytes": 1024, "comp_algorithm": comp_algorithm} for name in zram_devices},
         "zswap": {"enabled": zswap_enabled},
     }
 
@@ -33,6 +33,35 @@ class SupervisorTests(unittest.TestCase):
                                  snapshot(["/dev/zram0"]))
         self.assertEqual(report["status"], "healthy")
         self.assertEqual(report["issues"], [])
+
+
+    def test_unexpected_active_zram_algorithm_is_reported_as_warning(self):
+        cfg = {
+            "PROFILE": "zram-fast",
+            "DEVICE": "/dev/zram0",
+            "ALGORITHM": "lz4",
+            "FALLBACK_ALGORITHMS": "lzo-rle,lzo",
+        }
+        report = inspect_health(
+            cfg,
+            snapshot(["/dev/zram0"], comp_algorithm="[zstd] lz4 lzo-rle"),
+        )
+        self.assertEqual(report["status"], "warning")
+        self.assertIn("zram_algorithm_mismatch", [item["code"] for item in report["issues"]])
+
+    def test_configured_fallback_algorithm_is_accepted(self):
+        cfg = {
+            "PROFILE": "zram-fast",
+            "DEVICE": "/dev/zram0",
+            "ALGORITHM": "zstd",
+            "FALLBACK_ALGORITHMS": "lzo-rle,lzo",
+        }
+        report = inspect_health(
+            cfg,
+            snapshot(["/dev/zram0"], comp_algorithm="[lzo-rle] lzo lz4"),
+        )
+        self.assertEqual(report["status"], "healthy")
+        self.assertNotIn("zram_algorithm_mismatch", [item["code"] for item in report["issues"]])
 
     def test_missing_configured_zram_swap_is_critical(self):
         report = inspect_health({"PROFILE": "zram-fast", "DEVICE": "/dev/zram0"},
