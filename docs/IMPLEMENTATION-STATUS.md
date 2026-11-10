@@ -32,7 +32,7 @@ This document records repository-backed implementation status. It distinguishes 
 - `1b7af96`: install the helper and preserve an existing `/etc/compresso/memory.conf` instead of overwriting it; reject symlink configuration.
 - `5a74878`: clarify the profile validation boundary for `BACKING_SWAP`.
 
-Latest validation: [push CI passed at `5a74878`](https://github.com/hegonhernandez-pixel/CompressOS-HAL/actions/runs/42826558081). The `memory-subsystem` job passed unit tests (43 tests), Python compilation and shell syntax checks.
+Latest code validation: [push CI passed at `5a74878`](https://github.com/hegonhernandez-pixel/CompressOS-HAL/actions/runs/42826558081) with 43 tests. The current review head also passed [PR CI at `32748f9`](https://github.com/hegonhernandez-pixel/CompressOS-HAL/actions/runs/42826797607), where the merged-base suite ran 45 tests; Python compilation and shell syntax checks passed in both runs.
 
 [PR #2](https://github.com/hegonhernandez-pixel/CompressOS-HAL/pull/2) was merged at `a52a40f` before this execution. This run did not modify or merge `main`; the new profile-management commits are on the recovery branch. A follow-up review PR is pending.
 
