@@ -11,6 +11,7 @@ install -m 0755 "$ROOT/src/compresso/memoryd.py" /usr/libexec/compresso/memoryd.
 install -m 0644 "$ROOT/src/compresso/metrics.py" /usr/libexec/compresso/metrics.py
 install -m 0755 "$ROOT/src/compresso/benchmark.py" /usr/libexec/compresso/benchmark.py
 install -m 0755 "$ROOT/src/compresso/supervisor.py" /usr/libexec/compresso/supervisor.py
+install -m 0755 "$ROOT/src/compresso/profilectl.py" /usr/libexec/compresso/profilectl.py
 install -m 0755 "$ROOT/scripts/compressoctl" /usr/local/bin/compressoctl
 install -m 0644 "$ROOT/config/memory.conf" /etc/compresso/memory.conf
 printf 'zram\n' > /etc/modules-load.d/compresso-zram.conf
@@ -25,4 +26,5 @@ echo "Instalado sin activar servicios. Revisa /etc/compresso/memory.conf."
 echo "Ejecuta python3 /usr/libexec/compresso/memoryd.py --dry-run antes de activar."
 echo "Métricas de solo lectura: compressoctl metrics"
 echo "Diagnóstico de solo lectura: compressoctl doctor"
+echo "Perfiles: compressoctl profile list|show|set PROFILE (set solo cambia configuración persistente)"
 echo "Coordina cualquier zram-generator/zram-tools existente antes de activar."
