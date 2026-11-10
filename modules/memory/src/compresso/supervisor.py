@@ -42,6 +42,38 @@ def inspect_health(config, metrics):
             add("critical", "configured_zram_missing", f"No se detecta {device} en sysfs.")
         if device not in active:
             add("critical", "configured_zram_not_active", f"{device} no aparece activo en /proc/swaps.")
+
+        # The kernel marks the selected ZRAM compressor with square brackets
+        # in comp_algorithm (for example: "lzo [lz4] lzo-rle").
+        # Accept the configured algorithm or any declared fallback because
+        # memoryd deliberately selects a fallback when the preferred one is absent.
+        zram_state = zram.get(devname) or {}
+        algorithms_text = zram_state.get("comp_algorithm")
+        preferred_algorithm = str(config.get("ALGORITHM", "")).strip()
+        if preferred_algorithm:
+            if not isinstance(algorithms_text, str) or not algorithms_text.strip():
+                add("warning", "zram_algorithm_telemetry_missing",
+                    f"No se pudo leer el algoritmo activo de {device}.")
+            else:
+                selected_algorithm = next(
+                    (token[1:-1] for token in algorithms_text.split()
+                     if token.startswith("[") and token.endswith("]")),
+                    None,
+                )
+                allowed_algorithms = {preferred_algorithm}
+                fallbacks = config.get("FALLBACK_ALGORITHMS", "")
+                if isinstance(fallbacks, str):
+                    allowed_algorithms.update(
+                        item.strip() for item in fallbacks.split(",") if item.strip()
+                    )
+                if selected_algorithm is None:
+                    add("warning", "zram_algorithm_state_unknown",
+                        f"El kernel no identificó el algoritmo seleccionado para {device}.")
+                elif selected_algorithm not in allowed_algorithms:
+                    expected = ", ".join(sorted(allowed_algorithms))
+                    add("warning", "zram_algorithm_mismatch",
+                        f"{device} usa {selected_algorithm}; configuración y fallbacks permitidos: {expected}.")
+
         if profile == "zram-fast" and zswap_enabled:
             add("warning", "zswap_should_be_disabled", "El perfil zram-fast espera Zswap desactivado.")
         if profile == "hybrid-exp" and not zswap_enabled:
