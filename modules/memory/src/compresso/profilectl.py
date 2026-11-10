@@ -24,7 +24,7 @@ PROFILE_INFO = {
     },
     "zswap-first": {
         "description": "Zswap backed by an explicitly configured swap device or file.",
-        "requirements": ["BACKING_SWAP must be set explicitly"],
+        "requirements": ["BACKING_SWAP must be set explicitly; its existence is checked when the daemon applies the profile"],
     },
     "hybrid-exp": {
         "description": "Experimental ZRAM plus Zswap configuration.",
