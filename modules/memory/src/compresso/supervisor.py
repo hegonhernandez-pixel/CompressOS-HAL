@@ -8,8 +8,14 @@ import sys
 from pathlib import Path
 
 
-def _enabled(value):
-    return str(value or "").strip().lower() in ("y", "yes", "1", "true", "on")
+def _toggle_state(value):
+    """Return True/False for known kernel toggle values, or None if unknown."""
+    token = str(value or "").strip().lower()
+    if token in ("y", "yes", "1", "true", "on", "enabled"):
+        return True
+    if token in ("n", "no", "0", "false", "off", "disabled"):
+        return False
+    return None
 
 
 def inspect_health(config, metrics):
@@ -23,7 +29,14 @@ def inspect_health(config, metrics):
         if isinstance(item, dict) and item.get("filename")
     }
     zram = metrics.get("zram") or {}
-    zswap_enabled = _enabled((metrics.get("zswap") or {}).get("enabled"))
+    zswap_data = metrics.get("zswap")
+    zswap_value = zswap_data.get("enabled") if isinstance(zswap_data, dict) else None
+    zswap_enabled = _toggle_state(zswap_value)
+    zswap_state = (
+        "enabled" if zswap_enabled is True else
+        "disabled" if zswap_enabled is False else
+        "unknown"
+    )
     zram_active = sorted(path for path in active if Path(path).name.startswith("zram"))
 
     def add(severity, code, message):
@@ -33,6 +46,12 @@ def inspect_health(config, metrics):
         add("critical", "no_active_swap", "No hay ningún dispositivo swap activo.")
     if not isinstance(metrics.get("memory_kb"), dict) or "MemTotal" not in metrics["memory_kb"]:
         add("warning", "memory_telemetry_missing", "No se pudo leer MemTotal desde la telemetría.")
+    if zswap_enabled is None:
+        add(
+            "warning",
+            "zswap_state_unknown",
+            "No se pudo determinar el estado de Zswap (interfaz ausente, ilegible o valor no reconocido); no se asumirá que está desactivado.",
+        )
 
     if profile not in ("zram-fast", "zswap-first", "hybrid-exp"):
         add("critical", "unknown_profile", "El perfil configurado no es reconocido.")
@@ -74,9 +93,9 @@ def inspect_health(config, metrics):
                     add("warning", "zram_algorithm_mismatch",
                         f"{device} usa {selected_algorithm}; configuración y fallbacks permitidos: {expected}.")
 
-        if profile == "zram-fast" and zswap_enabled:
+        if profile == "zram-fast" and zswap_enabled is True:
             add("warning", "zswap_should_be_disabled", "El perfil zram-fast espera Zswap desactivado.")
-        if profile == "hybrid-exp" and not zswap_enabled:
+        if profile == "hybrid-exp" and zswap_enabled is False:
             add("critical", "hybrid_zswap_disabled", "El perfil híbrido requiere Zswap habilitado.")
     elif profile == "zswap-first":
         backing = config.get("BACKING_SWAP", "")
@@ -84,7 +103,7 @@ def inspect_health(config, metrics):
             add("critical", "backing_swap_not_configured", "zswap-first requiere BACKING_SWAP.")
         elif backing not in active:
             add("critical", "backing_swap_not_active", f"El backend {backing} no aparece activo en /proc/swaps.")
-        if not zswap_enabled:
+        if zswap_enabled is False:
             add("critical", "zswap_disabled", "El perfil zswap-first requiere Zswap habilitado.")
         if zram_active:
             add("warning", "unexpected_zram_swap", "Hay swap ZRAM activo mientras el perfil es zswap-first.")
@@ -102,6 +121,7 @@ def inspect_health(config, metrics):
         "profile": profile,
         "active_swaps": sorted(active),
         "zswap_enabled": zswap_enabled,
+        "zswap_state": zswap_state,
         "issues": issues,
         "safety": {"read_only": True, "changes_active_swap": False,
                    "changes_kernel_parameters": False, "automatic_recovery": False},
