@@ -48,6 +48,17 @@ This produces a separate root filesystem (EXT4 + TAR), not a Linux Mint ISO and 
 
 These require kernel/driver interfaces and hardware-specific validation; the historical architecture notes are design inputs, not evidence that those interfaces exist on Linux Mint 22.3.
 
+
+## Linux Mint host integration
+
+`scripts/install-cas-mint.sh` runs the CAS regression tests, installs the user-space package and rules, preserves existing configuration files, and enables the low-priority `compresso-auditd.service`. It does not alter swap, kernel parameters, Zswap, GPU sysfs or the existing memoryd service. Run it from the repository with:
+
+```bash
+sudo bash modules/memory/scripts/install-cas-mint.sh
+```
+
+`scripts/uninstall-cas-mint.sh` removes the CAS executables and service while deliberately preserving `/etc/compresso` and `/var/lib/compresso/cas`. These scripts are provided for the local Mint host; they have not been executed against the user's live machine from this session.
+
 ## Local tests
 
 ```bash
