@@ -154,7 +154,8 @@ def _vulkan_summary(runner):
         for match in re.findall(r"^\s*deviceName\s*=\s*(.+?)\s*$", summary, flags=re.MULTILINE)
     ]
     report = {
-        "available": result.returncode == 0,
+        "command_succeeded": result.returncode == 0,
+        "available": result.returncode == 0 and bool(devices),
         "returncode": result.returncode,
         "devices": devices,
         "summary": summary[:20000],
@@ -162,6 +163,8 @@ def _vulkan_summary(runner):
     if result.returncode != 0:
         report["reason"] = "vulkaninfo_failed"
         report["error"] = error[:4000]
+    elif not devices:
+        report["reason"] = "no_vulkan_devices"
     return report
 
 
