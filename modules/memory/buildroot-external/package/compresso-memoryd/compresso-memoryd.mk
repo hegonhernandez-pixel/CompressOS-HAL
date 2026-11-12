@@ -3,8 +3,13 @@ COMPRESSO_MEMORYD_SITE = $(BR2_EXTERNAL_COMPRESSO_PATH)/../src/compresso
 COMPRESSO_MEMORYD_SITE_METHOD = local
 COMPRESSO_MEMORYD_LICENSE = MIT
 COMPRESSO_MEMORYD_LICENSE_FILES = ../../LICENSE
+COMPRESSO_MEMORYD_SYSTEMD_SERVICE = compresso-memoryd.service
+COMPRESSO_MEMORYD_SYSTEMD_AUTO_ENABLE = YES
+
 define COMPRESSO_MEMORYD_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 $(@D)/memoryd.py $(TARGET_DIR)/usr/libexec/compresso/memoryd.py
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_COMPRESSO_PATH)/../config/memory.conf $(TARGET_DIR)/etc/compresso/memory.conf
+	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_COMPRESSO_PATH)/../systemd/compresso-memoryd.service $(TARGET_DIR)/usr/lib/systemd/system/compresso-memoryd.service
 endef
+
 $(eval $(generic-package))
