@@ -5,6 +5,11 @@ import json
 import sys
 from pathlib import Path
 
+# Buildroot installs the package in this private, stable location.
+installed_lib = Path("/usr/lib/compresso")
+if installed_lib.is_dir():
+    sys.path.insert(0, str(installed_lib))
+
 from compresso_cas.indexer import index_tree
 from compresso_cas.policy import decision_dict
 from compresso_cas.registry import CasRegistry
