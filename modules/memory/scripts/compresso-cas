@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+"""CAS index, integrity audit and I/O routing planner."""
+import argparse
+import json
+import sys
+from pathlib import Path
+
+# Buildroot installs the package in this private, stable location.
+installed_lib = Path("/usr/lib/compresso")
+if installed_lib.is_dir():
+    sys.path.insert(0, str(installed_lib))
+
+from compresso_cas.indexer import index_tree
+from compresso_cas.policy import decision_dict
+from compresso_cas.registry import CasRegistry
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="compresso-cas")
+    parser.add_argument("--cas-root", default="/var/lib/compresso/cas")
+    sub = parser.add_subparsers(dest="command", required=True)
+    index = sub.add_parser("index")
+    index.add_argument("path")
+    index.add_argument("--max-files", type=int, default=1000)
+    sub.add_parser("audit")
+    plan = sub.add_parser("plan")
+    plan.add_argument("--priority", choices=["critical", "normal", "background"], required=True)
+    plan.add_argument("--operation", choices=["read", "write"], required=True)
+    plan.add_argument("--size-bytes", type=int, required=True)
+    plan.add_argument("--vram-usage", type=int, default=100)
+    plan.add_argument("--gpu-available", action="store_true")
+    plan.add_argument("--game-mode", action="store_true")
+    args = parser.parse_args()
+    if args.command == "plan":
+        print(json.dumps(decision_dict(priority=args.priority, operation=args.operation,
+              size_bytes=args.size_bytes, vram_usage_percent=args.vram_usage,
+              gpu_available=args.gpu_available, game_mode=args.game_mode), sort_keys=True))
+        return 0
+    registry = CasRegistry(args.cas_root)
+    if args.command == "index":
+        result = index_tree(args.path, registry, args.max_files)
+    else:
+        result = registry.audit()
+    print(json.dumps(result, sort_keys=True))
+    return 0 if all(item.get("state", "verified") == "verified" for item in result) else 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,11 @@
+config BR2_PACKAGE_COMPRESSO_ZVGA
+	bool "compresso zVGA Vulkan compression worker"
+	depends on BR2_INSTALL_LIBSTDCPP
+	depends on BR2_PACKAGE_VULKAN_HEADERS
+	depends on BR2_PACKAGE_VULKAN_LOADER
+	depends on BR2_PACKAGE_GLSLANG
+	depends on BR2_PACKAGE_SPIRV_TOOLS
+	help
+	  Experimental bounded C++17/Vulkan worker and precompiled SPIR-V shader.
+	  This processes explicit user-space buffers only; it is not a kernel
+	  ZRAM/Zswap codec and does not map arbitrary process memory.

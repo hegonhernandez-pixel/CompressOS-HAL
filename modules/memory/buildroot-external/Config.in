@@ -1,3 +1,5 @@
 menu "CompressOS-HAL experimental components"
 source "$BR2_EXTERNAL_COMPRESSO_PATH/package/compresso-memoryd/Config.in"
+source "$BR2_EXTERNAL_COMPRESSO_PATH/package/compresso-cas/Config.in"
+source "$BR2_EXTERNAL_COMPRESSO_PATH/package/compresso-zvga/Config.in"
 endmenu
