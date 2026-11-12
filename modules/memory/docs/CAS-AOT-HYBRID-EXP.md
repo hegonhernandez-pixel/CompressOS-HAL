@@ -32,9 +32,9 @@ The policy is a planner only. It does not transfer kernel pages, write sysfs, al
 
 ## Buildroot integration
 
-The existing external tree is `modules/memory/buildroot-external`. It now contains a Python/SQLite CAS package and an optional C++17/Vulkan zVGA package that compiles the existing shader and worker. The latter requires target Vulkan headers/loader and host-side glslang/SPIR-V validators.
+The existing external tree is `modules/memory/buildroot-external`. It now contains a Python/SQLite CAS package, the existing memory configurator, and an optional C++17/Vulkan zVGA package. The Buildroot baseline is pinned to **2025.02.19 LTS** in `BUILDROOT_VERSION`; the x86_64 rootfs defconfig and host build scripts are included. The Vulkan package uses target Vulkan headers/loader, host `spirv-val` from Buildroot's `host-spirv-tools`, and host `glslangValidator` from the Mint build machine.
 
-This is not a complete defconfig or a Mint ISO builder. Buildroot creates a separate target root filesystem. Mint remains the development host. The Buildroot release and Kconfig symbols must be pinned and validated against the chosen upstream release before claiming a reproducible full image build. No Buildroot image build has yet been run.
+This produces a separate root filesystem (EXT4 + TAR), not a Linux Mint ISO and not a complete bootable OS: a matching kernel, DRM driver/firmware and bootloader are still outside this profile. The full Buildroot build and target boot have not yet been run.
 
 ## Not implemented / explicitly deferred
 
