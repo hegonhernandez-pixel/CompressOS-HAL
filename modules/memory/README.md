@@ -119,6 +119,8 @@ It emits JSON with Linux distribution/kernel/architecture, CPU model, DRM GPU ve
 
 Virtualization detection is deliberately conservative: recognized DMI/hypervisor markers are reported as `suspected_virtualized`; absence of a marker is `unknown`, never proof that the machine is physical. A successful Vulkan summary proves device enumeration only. To validate the actual shader/driver path, build and run the zVGA worker with `--backend vulkan` and retain its device/result output; software Vulkan is not physical-GPU evidence.
 
+If the CLI is not installed yet, run the probe directly from the repository with `PYTHONPATH=modules/memory/src python3 -m compresso.hardware`. If the report says `vulkaninfo_not_installed`, install the optional inspection utility with `sudo apt install vulkan-tools` and run it again.
+
 For an initial hardware report, attach the complete JSON output together with the zVGA test output. Do not redact GPU IDs or driver versions if compatibility diagnosis is the goal; redact serial numbers if a later collector adds them.
 
 ## Tests
@@ -146,7 +148,7 @@ This runs unit tests, Python compilation, and shell syntax checks. CI is configu
 
 <!-- coderabbit-ai-generated-section:v1:6e670f4fe3a299dee958cfc2cac49fb06c35ff993f22492e83c24edb204bb61d -->
 
-- Real Mint validation, Buildroot validation and Mint ISO remastering remain future work.
+- Real Mint/hardware validation, full Buildroot rootfs compilation/boot and Mint ISO remastering remain future work.
 - The independent [zVGA engine](../zvga/README.md) provides experimental user-space compression and Vulkan execution. Install it separately to use `compressoctl engine`; it does not replace kernel ZRAM/Zswap codecs.
 
 <!-- /coderabbit-ai-generated:v1 -->
