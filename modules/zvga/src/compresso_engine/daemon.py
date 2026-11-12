@@ -116,8 +116,11 @@ def serve(path, engine, stop=None, ready=None):
                 if active is not None and not active.done():
                     with connection:
                         try:
+                            # Drain the bounded request before replying/closing so
+                            # a large client send cannot lose the busy response.
+                            read_message(connection)
                             send_message(connection, {'ok': False, 'error': 'engine busy; retry later'})
-                        except (ValueError, OSError):
+                        except (ValueError, RecursionError, OSError):
                             pass
                 else:
                     active = executor.submit(handle, connection)

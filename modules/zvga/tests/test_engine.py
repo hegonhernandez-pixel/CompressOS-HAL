@@ -71,3 +71,4 @@ class VulkanEquivalenceTests(unittest.TestCase):
                                 timeout=20)
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse(result.stdout)
+        self.assertIn(b'input exceeds 1 MiB', result.stderr)

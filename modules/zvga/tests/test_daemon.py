@@ -125,7 +125,8 @@ class DaemonTests(unittest.TestCase):
                 client.start()
                 self.assertTrue(started.wait(5))
                 before = time.monotonic()
-                response = request(path, {'op': 'status'})
+                response = request(path, {'op': 'compress',
+                                          'data': base64.b64encode(b'A' * MAX_INPUT).decode()})
                 self.assertLess(time.monotonic() - before, 2)
                 self.assertFalse(response['ok'])
                 self.assertIn('busy', response['error'])

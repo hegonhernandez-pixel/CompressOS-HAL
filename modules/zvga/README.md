@@ -1,6 +1,6 @@
 <!-- coderabbit-ai-generated:v1 -->
 
-<!-- coderabbit-ai-generated-section:v1:5dc08bef3e13f9eb1dc94fb7e8b4295f209ef6bec06593608b6bca1146aceda4 -->
+<!-- coderabbit-ai-generated-section:v1:2955bb52a200bad7b10c7434a6ce050b68c5d504fc24195cbe6b31cf056ac3e3 -->
 
 # Experimental Linux compression engine (zVGA)
 
@@ -8,7 +8,7 @@ This module connects a bounded CPU compression reference, a Vulkan 1.0 compute s
 
 ## Format and bounds
 
-CSO1 is an experimental lossless format, not compatible with LZ4, Zstd or kernel swap representations. Each request accepts at most 1 MiB. Pages are 4096 bytes. RLE pairs contain a byte for run length minus one and a byte value (maximum run 256). Pages that would expand are stored raw.
+CSO1 is an experimental lossless format, not compatible with LZ4, Zstd or kernel swap representations. Compression accepts at most 1 MiB of input. Decompression accepts CSO1 containers up to 1,049,356 bytes and produces at most 1 MiB. Pages are 4096 bytes. RLE pairs contain a byte for run length minus one and a byte value (maximum run 256). Pages that would expand are stored raw.
 
 The little-endian header is `4sII`: magic `CSO1`, original byte length, CRC32. Each page has a `BH` header: mode (0 raw, 1 RLE) and payload byte length, followed by its payload. The original length determines the number and expanded size of pages. Empty inputs contain only the header. Decoding rejects invalid sizes, excess expansion, malformed/truncated blocks, trailing bytes and CRC mismatch. CRC32 detects accidental corruption; it is not authentication.
 
@@ -43,7 +43,7 @@ compresso-engine decompress < input.cso > restored.bin
 cmp input.bin restored.bin
 ```
 
-The CLI reads binary stdin, writes binary stdout, and reports the actual backend and fallback reason as JSON on stderr. Its package path is relative to the launcher, so the CLI also supports a CMake install-time `--prefix` override. Configure the final prefix with `-DCMAKE_INSTALL_PREFIX=...` when using the systemd service; its ExecStart path is set during configuration.
+The compress and decompress commands read binary stdin, write binary stdout, and report the actual backend and fallback reason as JSON on stderr. The status command reads no stdin and prints JSON on stdout with configuration, helper availability and both input limits. Its package path is relative to the launcher, so the CLI also supports a CMake install-time `--prefix` override. Configure the final prefix with `-DCMAKE_INSTALL_PREFIX=...` when using the systemd service; its ExecStart path is set during configuration.
 
 Inputs above the operation limit are rejected. `--backend auto` tries Vulkan and falls back to CPU with a reason. `--backend vulkan` returns an error if Vulkan fails; empty input uses CPU without GPU dispatch. Decompression always uses CPU. `status` reports configuration and worker presence, not a GPU health probe; force Vulkan compression to verify execution. `--helper` selects a trusted local executable and is not accepted from socket requests.
 
@@ -75,9 +75,9 @@ After testing, optionally enable subsequent user-session activation with `system
 
 For a manual foreground server, run `compresso-engine serve --backend auto`. The default socket is `$XDG_RUNTIME_DIR/compresso-engine/engine.sock`. Outside a user session, use `--socket /path/to/private-directory/engine.sock` on both server and remote client. The directory must belong to the current UID with mode 0700; the socket is 0600 and peers must share the UID. Existing sockets are never replaced; after an unclean shutdown, verify no server is running before manually removing a stale socket. SIGINT/SIGTERM shut down after the bounded current request and remove the socket.
 
-Protocol: one newline-terminated JSON object per connection. Operations are `status`, `compress`, `decompress`; data is strict base64. Responses have `ok`, data and sizes, or `error`.
+Protocol: one newline-terminated JSON object per connection. Operations are `status`, `compress`, `decompress`; data is strict base64. Compression/decompression responses have `ok`, base64 `data`, `input_bytes`, `output_bytes` and backend metadata, or an `error`. Status returns `ok`, `configured_backend`, `helper_available`, `max_input_bytes` and `max_decompress_input_bytes`; it has no data payload.
 
-One request is processed at a time. While it is active, additional connections are rejected promptly with an engine-busy error; clients can retry later. Work is never queued behind a slow Vulkan worker. Status publishes separate compression and decompression input limits.
+One request is processed at a time. While it is active, additional connections receive an engine-busy error after their bounded request is read; clients can retry later. Work is never queued behind a slow Vulkan worker. Status publishes separate compression and decompression input limits.
 
 Wire messages are capped at twice the maximum CSO1 container size and reading/sending has five-second deadlines. There is no request-selected backend, executable, filesystem path or shell execution.
 

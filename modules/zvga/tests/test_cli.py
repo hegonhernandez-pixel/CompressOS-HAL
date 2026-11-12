@@ -37,9 +37,15 @@ class CliTests(unittest.TestCase):
                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             try:
                 deadline = time.monotonic() + 5
-                while not path.exists() and time.monotonic() < deadline and server.poll() is None:
+                ready = False
+                while time.monotonic() < deadline and server.poll() is None:
+                    probe = subprocess.run(self.command('status', '--remote', '--socket', str(path)),
+                                           capture_output=True, timeout=2)
+                    if probe.returncode == 0:
+                        ready = True
+                        break
                     time.sleep(0.02)
-                self.assertTrue(path.exists())
+                self.assertTrue(ready, 'daemon did not answer a readiness request')
                 result = subprocess.run(self.command('compress', '--remote', '--socket', str(path)),
                                         input=b'A' * 8192, capture_output=True, timeout=30, check=True)
                 self.assertIn(('\"backend\": \"' + backend + '\"').encode(), result.stderr)
