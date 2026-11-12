@@ -1,95 +1,108 @@
 # CompressOS-HAL
-CompressOS-HAL
-Hardware Abstraction Layer for GPU-Assisted Linux Optimization
 
-Project status: Experimental / Research and Development
-Maintainer: hegonhernandez-pixel
-Initial development date: November 2, 2026
+**Hardware Abstraction Layer for GPU-Assisted Linux Optimization**
 
-Overview
+CompressOS-HAL is an experimental, modular Linux systems project exploring resource indexing, lossless data processing, CPU/GPU workload dispatch, and integration with existing Linux memory mechanisms.
 
-CompressOS-HAL is an experimental modular Linux optimization architecture focused on resource indexing, instruction-based data processing, GPU compute acceleration, and CPU/GPU workload scheduling.
+> **Status: Experimental / Research and Development.** Features are validated incrementally. No production readiness, universal hardware support, kernel swap acceleration, or performance improvement is implied.
 
-The project explores the integration of conventional Linux memory-management mechanisms with an independent GPU-assisted processing engine.
+## Project goals
 
-Its objective is to develop a hardware-independent architecture capable of identifying reusable resources, interpreting processing instructions, dispatching suitable workloads to CPU or GPU backends, and managing optimized resource representations.
+- Build a hardware-aware abstraction layer for CPU, GPU, memory, and storage resources.
+- Identify and index reusable resources with bounded, auditable operations.
+- Explore lossless compression and compute-shader processing through CPU and Vulkan backends.
+- Integrate carefully with Linux ZRAM and Zswap without conflating user-space buffers with kernel-managed memory pages.
+- Preserve reproducible tests, hardware evidence, and explicit implementation limits.
 
-Core Architecture
-ZVGA Core: Instruction interpretation and GPU-assisted processing.
-Light-Compression Indexers: Resource identification, classification, indexing, and reuse.
-CPU/GPU Scheduler: Hardware-aware workload dispatch.
-Vulkan Backend: Compute shader execution.
-Fast-RAM: Management of reusable resources and processing buffers.
-ZRAM Adapter: Integration with Linux compressed RAM.
-ZSwap Adapter: Integration with Linux compressed swap caching.
-HAL: Hardware and driver abstraction.
-Development Platforms
-Fedora
-Arch Linux
-Debian
-Ubuntu
-Linux Mint
-AG1899_V04 (hardware identification and compatibility pending)
-Applications and Research
-RetroArch and gaming systems.
-Multimedia resource processing.
-AI inference and tensor-processing research.
-General-purpose Linux resource optimization.
-Development Status
+## Architecture and modules
 
-This project is experimental. No complete implementation has yet been validated across all proposed platforms.
+| Module | Responsibility | Current status |
+|---|---|---|
+| `modules/memory` | Memory profiles, metrics, read-only health checks, hardware inventory, CAS resource registry, audit and policy experiments | Experimental; Linux Mint integration work in progress |
+| `modules/zvga` | Bounded user-space codec, CPU backend, Vulkan compute worker, local daemon and CLI | Build and test suite pass; physical RX 6500 XT shader execution confirmed |
+| Buildroot integration | Package and external-tree experiments | Experimental; full image/boot validation pending |
 
-Current development includes prototypes, architectural research, integration experiments, compatibility investigations, and failure analysis.
+See each module's README for commands, requirements, safety limits, and test coverage.
 
-No compression ratio, performance improvement, or hardware compatibility is guaranteed.
+## Verified hardware checkpoint — 2026-11-12
 
-Related Work
-Fedora-compresSO
-Development notebook
-Collaboration and Support
+A physical Linux host with an **AMD Radeon RX 6500 XT (Navi 24)** was enumerated by Vulkan through Mesa RADV. The native ZVGA Vulkan worker was built and executed a compute request. Its runtime log identified:
 
-The project welcomes technical collaboration, hardware testing, documentation contributions, and voluntary financial support.
+```text
+device: AMD Radeon RX 6500 XT (RADV NAVI24)
+exit code: 0
+```
 
-Potential future support channels include donations, sponsorships, specialized builds, hardware adaptation, and commercial integrations.
+The ZVGA test suite completed **23 tests successfully; 2 tests were skipped** because they require the installed CLI. The Vulkan equivalence test passed, comparing GPU output with the CPU reference.
 
-Intellectual Property and Licensing
+This confirms execution by the named physical GPU for the recorded test. It does **not** establish a speedup, favorable compression ratio, sustained throughput, GPU-backed swap, kernel page migration, or ZRAM/Zswap integration. Performance benchmarking and end-to-end memory integration remain separate milestones. Full details and reproducible commands are in [the hardware validation record](docs/HARDWARE-VALIDATION-2026-11-12.md).
 
-Licensing and commercial distribution terms are under evaluation.
+## Quick start: build and test ZVGA on Linux Mint / Ubuntu
 
-No license is granted to proprietary components unless explicitly stated.
+Install build dependencies:
 
-Please consult LICENSE-STATUS.md before reusing project materials.
+```bash
+sudo apt-get update
+sudo apt-get install -y cmake ninja-build g++ python3 \
+  libvulkan-dev mesa-vulkan-drivers glslang-tools spirv-tools
+```
 
-Project Philosophy
+Configure and build:
 
-Research first. Validate before claiming. Document failures. Preserve reproducibility. Build modularly.
-Objetivo
+```bash
+cmake -S modules/zvga -B build/zvga -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release
+cmake --build build/zvga
+```
 
-Unificar los motores de compresión, indexación, interpretación de instrucciones y planificación CPU/GPU en una arquitectura modular, independiente del hardware.
+Run the module tests against the locally built Vulkan helper:
 
-Repositorios relacionados
+```bash
+COMPRESSO_VULKAN_HELPER="$PWD/build/zvga/compresso-vulkan" \
+  bash modules/zvga/scripts/test.sh
+```
 
-    [Fedora-compresSO ](https://github.com/hegonhernandez-pixel/Fedora-compresSO?utm_source=chatgpt.com)
+To directly confirm which physical device executes the shader:
 
-    [Notebook de desarrollo]
-    (https://gemini.google.com/app/a74843a47f1cfe75?hl=es_419&utm_source=chatgpt.com)
-    Estado: Experimental. Sin validación integral de rendimiento ni despliegue final.
+```bash
+set -o pipefail
+head -c 4096 /dev/zero | \
+  build/zvga/compresso-vulkan \
+  > /tmp/compresso-gpu-output.bin \
+  2> /tmp/compresso-gpu-log.txt
+status=$?
+cat /tmp/compresso-gpu-log.txt
+echo "exit=$status"
+stat -c '%s bytes' /tmp/compresso-gpu-output.bin
+```
 
+A valid hardware checkpoint must show the intended GPU model in the worker log and exit code `0`. Vulkan enumeration alone is not proof that the shader ran on that device. Systems exposing multiple Vulkan devices may also expose a software renderer such as llvmpipe; always inspect the worker's runtime device line.
 
+## Safety and integration boundaries
 
-CompressOS-HAL — Experimental Linux optimization through resource intelligence and GPU compute. 
+- Hardware inventory and health diagnostics are read-only unless a command explicitly documents otherwise.
+- Do not enable memory daemons, change active swap, modify kernel parameters, or alter ZRAM/Zswap configuration as part of a shader build/test.
+- ZVGA currently processes bounded user-space input buffers. It does not automatically read process memory or kernel swap pages.
+- Vulkan compute execution is not equivalent to a kernel swap backend. GPU-backed swap, page migration, P2P DMA, and kernel codec adapters are not validated.
+- The CPU reference is retained for correctness checks and fallback. A successful test is not a performance claim.
 
+## Development branches
 
-## Integrated subsystems
+- `main` is the canonical integration branch for CompressOS-HAL.
+- `exp/*` branches are experimental work areas; preserve their history and integrate completed changes into `main) through reviewable merges.
+- `recovery/*` branches are retained as recovery/reference history, not as alternate canonical branches.
+- Automated review branches are retained for traceability; do not treat them as independent releases.
 
-- **Memory management (experimental):** ZRAM/Zswap profiles, metrics collection, a read-only health supervisor, a bounded benchmark, and a read-only host/GPU/Vulkan inventory are maintained in [`modules/memory`](modules/memory/README.md). The initial integration targets an already-installed Linux Mint XFCE system; Mint 22.3 runtime validation and custom ISO integration are not yet complete.
-- **Platform development:** Fedora-specific distribution work remains in the separate [Fedora-compresSO repository](https://github.com/hegonhernandez-pixel/Fedora-compresSO). Its `main` and `exp/fast-zram-zswap-daemons` branches are preserved independently; this repository's `main` remains the canonical CompressOS-HAL core.
+The current branch inventory and synchronization notes are maintained in [BRANCH-STATUS.md](docs/BRANCH-STATUS.md).
 
-<!-- coderabbit-ai-generated:v1 -->
+## Related project
 
-<!-- coderabbit-ai-generated-section:v1:872c014b1c3a86f6d7fa5f040ad68b4211221fb6696d8ab11becab81ae62cb39 -->
+Fedora-specific distribution work remains in the separate [Fedora-compresSO repository](https://github.com/hegonhernandez-pixel/Fedora-compresSO). CompressOS-HAL `main` is the canonical core for this repository.
 
-- **Compression engine / Vulkan (experimental):** [`modules/zvga`](modules/zvga/README.md) implements bounded user-space compression, a Vulkan compute shader, CPU fallback, and a local Linux user daemon. Hardware acceleration and kernel swap integration are not claimed.
+## Licensing
 
+Licensing and commercial distribution terms are under evaluation. No license is granted to proprietary components unless explicitly stated. Review [LICENSE-STATUS.md](LICENSE-STATUS.md) before reusing project materials.
 
-<!-- /coderabbit-ai-generated:v1 -->
+## Project philosophy
+
+**Research first. Validate before claiming. Document failures. Preserve reproducibility. Build modularly.**
