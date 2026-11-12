@@ -132,5 +132,37 @@ class HardwareProbeTests(unittest.TestCase):
         self.assertIn('hardware.py" /usr/libexec/compresso/hardware.py', installer)
 
 
+    def test_probe_does_not_modify_proc_sys_or_device_fixtures(self):
+        with tempfile.TemporaryDirectory() as root:
+            proc, sys, dev, etc = self.make_tree(root)
+            base = Path(root)
+            before = {
+                str(path.relative_to(base)): path.read_bytes()
+                for path in base.rglob("*") if path.is_file() and not path.is_symlink()
+            }
+            collect_hardware(
+                proc_root=proc, sys_root=sys, dev_root=dev, etc_root=etc,
+                runner=self.fake_vulkan, kernel_release="test", machine="x86_64",
+            )
+            after = {
+                str(path.relative_to(base)): path.read_bytes()
+                for path in base.rglob("*") if path.is_file() and not path.is_symlink()
+            }
+        self.assertEqual(after, before)
+
+    def test_vulkan_command_failure_is_reported_not_hidden(self):
+        with tempfile.TemporaryDirectory() as root:
+            proc, sys, dev, etc = self.make_tree(root)
+            def failed(*args, **kwargs):
+                return subprocess.CompletedProcess(args[0], 1, "", "no Vulkan ICD")
+            report = collect_hardware(
+                proc_root=proc, sys_root=sys, dev_root=dev, etc_root=etc,
+                runner=failed, kernel_release="test", machine="x86_64",
+            )
+        self.assertFalse(report["gpu"]["vulkan"]["available"])
+        self.assertEqual(report["gpu"]["vulkan"]["reason"], "vulkaninfo_failed")
+        self.assertEqual(report["gpu"]["vulkan"]["error"], "no Vulkan ICD")
+
+
 if __name__ == "__main__":
     unittest.main()
