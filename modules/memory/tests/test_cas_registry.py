@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from compresso_cas.indexer import index_tree
 from compresso_cas.registry import CasRegistry
 
 
@@ -24,7 +25,7 @@ class CasRegistryTests(unittest.TestCase):
             source = root / "binary"
             source.write_bytes(b"original")
             registry = CasRegistry(root / "cas")
-            record = registry.ingest(source)
+            registry.ingest(source)
             blob = Path(registry.resolve(source)["path"])
             blob.chmod(0o644)
             blob.write_bytes(b"tampered")
@@ -44,6 +45,22 @@ class CasRegistryTests(unittest.TestCase):
             registry = CasRegistry(root / "cas")
             with self.assertRaises(ValueError):
                 registry.ingest(link)
+
+    def test_indexer_only_snapshots_elf_and_never_modifies_source(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            elf = root / "app"
+            elf.write_bytes(b"\x7fELF" + b"payload")
+            plain = root / "notes.txt"
+            plain.write_text("not an executable")
+            before = elf.read_bytes()
+            registry = CasRegistry(root / "cas")
+            result = index_tree(root, registry)
+            self.assertEqual(len(result), 1)
+            self.assertFalse(result[0]["binary_modified"])
+            self.assertEqual(result[0]["translation"], "indexed_only")
+            self.assertEqual(elf.read_bytes(), before)
+            self.assertIsNone(registry.resolve(plain))
 
 
 if __name__ == "__main__":
