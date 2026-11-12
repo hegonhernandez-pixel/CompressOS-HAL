@@ -62,6 +62,21 @@ class CasRegistryTests(unittest.TestCase):
             self.assertEqual(elf.read_bytes(), before)
             self.assertIsNone(registry.resolve(plain))
 
+    def test_audit_batch_cursor_visits_each_block_and_wraps(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            registry = CasRegistry(root / "cas")
+            for name, data in (("one", b"one"), ("two", b"two"), ("three", b"three")):
+                source = root / name
+                source.write_bytes(data)
+                registry.ingest(source)
+            first = registry.audit(max_blocks=1)
+            second = registry.audit(max_blocks=1, after_sha256=first[-1]["sha256"])
+            third = registry.audit(max_blocks=1, after_sha256=second[-1]["sha256"])
+            self.assertEqual(len({first[0]["sha256"], second[0]["sha256"], third[0]["sha256"]}), 3)
+            wrapped = registry.audit(max_blocks=1, after_sha256=third[-1]["sha256"])
+            self.assertEqual(wrapped[0]["sha256"], first[0]["sha256"])
+
 
 if __name__ == "__main__":
     unittest.main()
