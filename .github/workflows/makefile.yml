@@ -22,7 +22,7 @@ jobs:
         run: python -m compileall -q src tests && python -m py_compile scripts/compresso-cas scripts/compresso-auditd
       - name: Shell syntax
         working-directory: modules/memory
-        run: bash -n scripts/*.sh scripts/compressoctl
+        run: bash -n scripts/*.sh scripts/compressoctl buildroot-external/scripts/*.sh
 
   compression-engine:
     runs-on: ubuntu-latest
