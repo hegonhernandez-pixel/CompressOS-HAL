@@ -5,16 +5,20 @@ BASE="/usr/libexec/compresso"
 
 usage() {
   cat <<'EOF'
-CompressOS-HAL control (read-only)
+CompressOS-HAL control
 
 Usage:
   compressoctl status
   compressoctl doctor
   compressoctl metrics
   compressoctl benchmark --profile PROFILE [--memory-mib N] [--hold-seconds N] [--output FILE]
+  compressoctl profile list
+  compressoctl profile show
+  compressoctl profile set PROFILE
   compressoctl help
 
-This tool does not activate/deactivate swap or change profiles.
+"profile set" only updates the persistent PROFILE key in /etc/compresso/memory.conf.
+It does not apply a profile to the running kernel, change swap, or restart services.
 EOF
 }
 
@@ -33,6 +37,9 @@ case "$command_name" in
     ;;
   benchmark)
     exec python3 "$BASE/benchmark.py" "$@"
+    ;;
+  profile)
+    exec python3 "$BASE/profilectl.py" --config /etc/compresso/memory.conf "$@"
     ;;
   help|-h|--help)
     usage

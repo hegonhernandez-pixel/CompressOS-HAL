@@ -11,8 +11,16 @@ install -m 0755 "$ROOT/src/compresso/memoryd.py" /usr/libexec/compresso/memoryd.
 install -m 0644 "$ROOT/src/compresso/metrics.py" /usr/libexec/compresso/metrics.py
 install -m 0755 "$ROOT/src/compresso/benchmark.py" /usr/libexec/compresso/benchmark.py
 install -m 0755 "$ROOT/src/compresso/supervisor.py" /usr/libexec/compresso/supervisor.py
+install -m 0755 "$ROOT/src/compresso/profilectl.py" /usr/libexec/compresso/profilectl.py
 install -m 0755 "$ROOT/scripts/compressoctl" /usr/local/bin/compressoctl
-install -m 0644 "$ROOT/config/memory.conf" /etc/compresso/memory.conf
+if [[ -L /etc/compresso/memory.conf ]]; then
+  echo "ERROR: /etc/compresso/memory.conf es un enlace simbólico; revísalo manualmente." >&2
+  exit 3
+elif [[ -e /etc/compresso/memory.conf ]]; then
+  echo "Preservando configuración existente: /etc/compresso/memory.conf"
+else
+  install -m 0644 "$ROOT/config/memory.conf" /etc/compresso/memory.conf
+fi
 printf 'zram\n' > /etc/modules-load.d/compresso-zram.conf
 install -m 0755 "$ROOT/scripts/metrics.sh" /usr/libexec/compresso/metrics.sh
 install -m 0755 "$ROOT/scripts/healthcheck.sh" /usr/libexec/compresso/healthcheck.sh
@@ -25,4 +33,5 @@ echo "Instalado sin activar servicios. Revisa /etc/compresso/memory.conf."
 echo "Ejecuta python3 /usr/libexec/compresso/memoryd.py --dry-run antes de activar."
 echo "Métricas de solo lectura: compressoctl metrics"
 echo "Diagnóstico de solo lectura: compressoctl doctor"
+echo "Perfiles: compressoctl profile list|show|set PROFILE (set solo cambia configuración persistente)"
 echo "Coordina cualquier zram-generator/zram-tools existente antes de activar."

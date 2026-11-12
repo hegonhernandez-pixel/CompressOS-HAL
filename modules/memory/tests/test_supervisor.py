@@ -117,6 +117,25 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(report["status"], "critical")
         self.assertIn("no_active_swap", [x["code"] for x in report["issues"]])
 
+    def test_missing_zswap_telemetry_is_unknown_not_disabled(self):
+        cfg = {"PROFILE": "zswap-first", "DEVICE": "/dev/zram0", "BACKING_SWAP": "/swapfile"}
+        report = inspect_health(cfg, snapshot(["/swapfile"], zswap_enabled=None))
+        codes = [item["code"] for item in report["issues"]]
+        self.assertEqual(report["status"], "warning")
+        self.assertIsNone(report["zswap_enabled"])
+        self.assertEqual(report["zswap_state"], "unknown")
+        self.assertIn("zswap_state_unknown", codes)
+        self.assertNotIn("zswap_disabled", codes)
+
+    def test_unrecognized_zswap_value_is_not_treated_as_disabled(self):
+        cfg = {"PROFILE": "hybrid-exp", "DEVICE": "/dev/zram0"}
+        report = inspect_health(cfg, snapshot(["/dev/zram0"], zswap_enabled="maybe"))
+        codes = [item["code"] for item in report["issues"]]
+        self.assertEqual(report["status"], "warning")
+        self.assertEqual(report["zswap_state"], "unknown")
+        self.assertIn("zswap_state_unknown", codes)
+        self.assertNotIn("hybrid_zswap_disabled", codes)
+
 
 if __name__ == "__main__":
     unittest.main()
