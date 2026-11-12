@@ -164,5 +164,38 @@ class HardwareProbeTests(unittest.TestCase):
         self.assertEqual(report["gpu"]["vulkan"]["error"], "no Vulkan ICD")
 
 
+    def test_successful_vulkan_command_without_devices_is_not_available(self):
+        with tempfile.TemporaryDirectory() as root:
+            proc, sys, dev, etc = self.make_tree(root)
+            def empty_devices(*args, **kwargs):
+                return subprocess.CompletedProcess(args[0], 0, "Vulkan Instance Version: 1.3.0\\n", "")
+            report = collect_hardware(
+                proc_root=proc, sys_root=sys, dev_root=dev, etc_root=etc,
+                runner=empty_devices, kernel_release="test", machine="x86_64",
+            )
+        self.assertTrue(report["gpu"]["vulkan"]["command_succeeded"])
+        self.assertFalse(report["gpu"]["vulkan"]["available"])
+        self.assertEqual(report["gpu"]["vulkan"]["reason"], "no_vulkan_devices")
+
+    def test_installed_style_script_runs_without_pythonpath(self):
+        import json
+        import os
+        import sys
+        with tempfile.TemporaryDirectory() as root:
+            proc, sys_root, dev, etc = self.make_tree(root)
+            script = Path(__file__).parents[1] / "src" / "compresso" / "hardware.py"
+            env = os.environ.copy()
+            env.pop("PYTHONPATH", None)
+            result = subprocess.run(
+                [sys.executable, str(script), "--proc-root", str(proc),
+                 "--sys-root", str(sys_root), "--dev-root", str(dev),
+                 "--etc-root", str(etc)],
+                capture_output=True, text=True, env=env, timeout=15,
+            )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["system"]["os"]["id"], "linuxmint")
+
+
 if __name__ == "__main__":
     unittest.main()
