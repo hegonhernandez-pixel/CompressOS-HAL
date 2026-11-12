@@ -1,4 +1,4 @@
-"""Immutable SHA-256 CAS store with SQLite aliases and background audit."""
+"""Immutable SHA-256 CAS store with SQLite aliases and integrity audit."""
 from __future__ import annotations
 
 import hashlib
@@ -108,9 +108,25 @@ class CasRegistry:
         return {"sha256": row[0], "uuid": row[1], "size_bytes": row[2],
                 "path": str(self.root / row[3]), "state": row[4]}
 
-    def audit(self) -> List[Dict[str, object]]:
+    def audit(self, max_blocks: int | None = None,
+              after_sha256: str | None = None) -> List[Dict[str, object]]:
+        if max_blocks is not None and not 1 <= max_blocks <= 100000:
+            raise ValueError("max_blocks must be between 1 and 100000")
         with self._connect() as db:
-            rows = db.execute("SELECT sha256,relative_path FROM blocks ORDER BY sha256").fetchall()
+            if max_blocks is None:
+                rows = db.execute(
+                    "SELECT sha256,relative_path FROM blocks ORDER BY sha256"
+                ).fetchall()
+            else:
+                rows = db.execute(
+                    "SELECT sha256,relative_path FROM blocks WHERE sha256>? ORDER BY sha256 LIMIT ?",
+                    (after_sha256 or "", max_blocks),
+                ).fetchall()
+                if not rows and after_sha256 is not None:
+                    rows = db.execute(
+                        "SELECT sha256,relative_path FROM blocks ORDER BY sha256 LIMIT ?",
+                        (max_blocks,),
+                    ).fetchall()
         results = []
         for digest, relative in rows:
             blob = self.root / relative
