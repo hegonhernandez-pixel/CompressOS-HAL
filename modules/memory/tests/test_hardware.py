@@ -14,6 +14,9 @@ class HardwareProbeTests(unittest.TestCase):
         dev = root / "dev"
         etc = root / "etc"
         (proc / "pressure").mkdir(parents=True)
+        (proc / "cpuinfo").write_text(
+            "processor : 0\nmodel name : Example CPU 8-Core\n"
+        )
         (proc / "meminfo").write_text(
             "MemTotal: 16384000 kB\nMemAvailable: 8192000 kB\n"
             "SwapTotal: 8192000 kB\nSwapFree: 4096000 kB\n"
@@ -29,7 +32,7 @@ class HardwareProbeTests(unittest.TestCase):
         )
         etc.mkdir()
         (etc / "os-release").write_text(
-            'ID=linuxmint\nPRETTY_NAME="Linux Mint 22.3 Zena"\nVERSION_ID="22.3"\n'
+            'ID=linuxmint\nID_LIKE="ubuntu debian"\nPRETTY_NAME="Linux Mint 22.3 Zena"\nVERSION_ID="22.3"\n'
         )
         dmi = sys / "class" / "dmi" / "id"
         dmi.mkdir(parents=True)
@@ -73,6 +76,8 @@ class HardwareProbeTests(unittest.TestCase):
 
         self.assertEqual(report["schema_version"], 1)
         self.assertEqual(report["system"]["os"]["id"], "linuxmint")
+        self.assertEqual(report["system"]["os"]["id_like"], "ubuntu debian")
+        self.assertEqual(report["system"]["cpu_model"], "Example CPU 8-Core")
         self.assertEqual(report["system"]["kernel"], "6.14.0-test")
         self.assertEqual(report["system"]["architecture"], "x86_64")
         self.assertEqual(report["gpu"]["drm_devices"][0]["vendor_id"], "0x10de")
