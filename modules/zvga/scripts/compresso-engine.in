@@ -1,0 +1,3 @@
+#!/bin/sh
+launcher_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 2
+exec python3 -I -c 'import runpy, sys; sys.path.insert(0, sys.argv.pop(1)); runpy.run_module("compresso_engine.cli", run_name="__main__", alter_sys=True)' "$launcher_directory/@COMPRESSO_PACKAGE_FROM_BIN@" "$@"

@@ -1,0 +1,20 @@
+[Unit]
+Description=CompressOS-HAL experimental user compression engine
+
+[Service]
+Type=simple
+ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/compresso-engine serve --backend auto --helper @CMAKE_INSTALL_FULL_BINDIR@/compresso-vulkan
+RuntimeDirectory=compresso-engine
+RuntimeDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%t/compresso-engine
+RestrictAddressFamilies=AF_UNIX
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=35
+
+[Install]
+WantedBy=default.target

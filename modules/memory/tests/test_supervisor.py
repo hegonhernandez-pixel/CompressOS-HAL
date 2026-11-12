@@ -35,7 +35,6 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(report["issues"], [])
 
 
-
     def test_missing_algorithm_telemetry_is_reported(self):
         cfg = {"PROFILE": "zram-fast", "DEVICE": "/dev/zram0", "ALGORITHM": "lz4"}
         for telemetry in (None, "", "  "):

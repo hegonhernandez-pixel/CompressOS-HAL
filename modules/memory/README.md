@@ -115,12 +115,24 @@ From the source checkout:
 ./scripts/test.sh
 ```
 
-This runs unit tests, Python compilation, and shell syntax checks. CI is configured in `.github/workflows/compresso-hal-exp-tests.yml`.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:cccf4d6d58a810711d83c15dbf55e0305eff8bdac675a9fb4082d440703afd67 -->
+
+This runs unit tests, Python compilation, and shell syntax checks. CI is configured in `.github/workflows/makefile.yml`; the same workflow builds and checks the independent compression engine.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Current limitations
 
 - This is an experimental integration for an already-installed Mint system, not a custom Mint ISO.
 - No real Mint VM or hardware validation is claimed.
 - No safe live swap deactivation command is implemented.
-- The benchmark engine, supervisor behavior, Buildroot validation and Mint ISO remastering remain future work.
-- Vulkan shader runtime is not implemented.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:6e670f4fe3a299dee958cfc2cac49fb06c35ff993f22492e83c24edb204bb61d -->
+
+- Real Mint validation, Buildroot validation and Mint ISO remastering remain future work.
+- The independent [zVGA engine](../zvga/README.md) provides experimental user-space compression and Vulkan execution. Install it separately to use `compressoctl engine`; it does not replace kernel ZRAM/Zswap codecs.
+
+<!-- /coderabbit-ai-generated:v1 -->

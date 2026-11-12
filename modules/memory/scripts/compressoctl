@@ -15,6 +15,7 @@ Usage:
   compressoctl profile list
   compressoctl profile show
   compressoctl profile set PROFILE
+  compressoctl engine compress|decompress|status|serve [OPTIONS]
   compressoctl help
 
 "profile set" only updates the persistent PROFILE key in /etc/compresso/memory.conf.
@@ -37,6 +38,9 @@ case "$command_name" in
     ;;
   benchmark)
     exec python3 "$BASE/benchmark.py" "$@"
+    ;;
+  engine)
+    exec compresso-engine "$@"
     ;;
   profile)
     exec python3 "$BASE/profilectl.py" --config /etc/compresso/memory.conf "$@"

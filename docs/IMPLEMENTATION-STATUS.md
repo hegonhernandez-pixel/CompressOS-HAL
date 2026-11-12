@@ -17,7 +17,13 @@ This document records repository-backed implementation status. It distinguishes 
 | Buildroot | An experimental external-tree scaffold exists. | It is explicitly not a complete Buildroot defconfig or Mint ISO builder. |
 | Mint ISO integration | Not present yet. | No custom ISO build or QEMU boot has been validated. |
 | Early boot integration | Not present yet as a completed subsystem. | Pending. |
-| zVGA / Vulkan shaders | No integrated `modules/zvga` or graphics subsystem is currently present in the module tree. | Pending; no GPU acceleration claims. |
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:5760d2e7691709b3014f5a9ad8f749e68a65eb3653551473be893a52a8c5a844 -->
+
+| zVGA / Vulkan shaders | Experimental CPU reference codec, Vulkan shader/worker, dispatcher, CLI and user daemon are present in `modules/zvga`. | Local CPU, software Vulkan equivalence and Unix daemon tests passed. Physical GPU/Mint validation and performance measurements remain pending; see the module README. |
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ## Recent recovery-branch changes
 
@@ -51,7 +57,13 @@ Latest recovery-branch validation before this documentation update: [push CI pas
 3. Complete the memory subsystem's runtime lifecycle, including status verification and safe shutdown/swapoff behavior.
 4. Integrate the memory package into the Mint live-image build workflow; keep Buildroot as a separate experimental target rather than treating it as the Mint ISO builder.
 5. Implement early-boot integration.
-6. Add the zVGA/Vulkan module behind hardware/driver capability detection and provide reproducible fallback behavior.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:e8bc19b43a707dc82b2d9d015c1349140389ce604d7d4d07dbbdeadfc08737b8 -->
+
+6. Validate the new zVGA/Vulkan buffer engine on physical GPUs and Mint. Capability checks, CPU fallback and a user daemon are implemented; performance, caching/indexers and any kernel codec integration remain pending.
+
+<!-- /coderabbit-ai-generated:v1 -->
 7. Build the ISO and validate boot and subsystem behavior in QEMU.
 
 ## Validation policy
