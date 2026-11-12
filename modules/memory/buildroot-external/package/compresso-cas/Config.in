@@ -1,7 +1,7 @@
 config BR2_PACKAGE_COMPRESSO_CAS
 	bool "compresso CAS indexer and auditor"
 	depends on BR2_PACKAGE_PYTHON3
-	select BR2_PACKAGE_SQLITE
+	select BR2_PACKAGE_PYTHON3_SQLITE
 	help
 	  Experimental user-space content-addressed store, SHA-256 auditor,
 	  non-mutating ELF indexer and I/O route planner. It does not patch
