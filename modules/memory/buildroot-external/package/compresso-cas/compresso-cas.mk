@@ -13,7 +13,13 @@ define COMPRESSO_CAS_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_COMPRESSO_PATH)/../config/daemon-hybrid.conf $(TARGET_DIR)/etc/compresso/daemon-hybrid.conf
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_COMPRESSO_PATH)/../config/aot-rules.conf $(TARGET_DIR)/etc/compresso/aot-rules.conf
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_COMPRESSO_PATH)/../config/boot-index.conf $(TARGET_DIR)/etc/compresso/boot-index.conf
+	$(INSTALL) -d $(TARGET_DIR)/var/lib/compresso/cas
+endef
+
+define COMPRESSO_CAS_INSTALL_INIT_SYSTEMD
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_COMPRESSO_PATH)/../systemd/compresso-auditd.service $(TARGET_DIR)/usr/lib/systemd/system/compresso-auditd.service
+	mkdir -p $(TARGET_DIR)/etc/systemd/system/multi-user.target.wants
+	ln -sf /usr/lib/systemd/system/compresso-auditd.service $(TARGET_DIR)/etc/systemd/system/multi-user.target.wants/compresso-auditd.service
 endef
 
 $(eval $(generic-package))

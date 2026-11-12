@@ -1,0 +1,61 @@
+"""Low-priority periodic CAS integrity auditor."""
+import argparse
+import configparser
+import json
+import os
+import signal
+import sys
+import time
+from pathlib import Path
+
+# Buildroot and Mint installers place the package in this stable location.
+installed_lib = Path("/usr/lib/compresso")
+if installed_lib.is_dir():
+    sys.path.insert(0, str(installed_lib))
+
+from compresso_cas.registry import CasRegistry
+
+_STOP = False
+
+
+def _stop(_signum, _frame):
+    global _STOP
+    _STOP = True
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="compresso-auditd")
+    parser.add_argument("--config", default="/etc/compresso/daemon-audit.conf")
+    args = parser.parse_args()
+    config = configparser.ConfigParser()
+    if not config.read(args.config):
+        parser.error("cannot read audit configuration")
+    if not config.getboolean("Audit_Engine", "enabled", fallback=True):
+        return 0
+    interval = config.getint("Audit_Engine", "scan_interval_seconds", fallback=300)
+    batch = config.getint("Audit_Engine", "max_blocks_per_cycle", fallback=64)
+    root = config.get("Storage", "cas_root", fallback="/var/lib/compresso/cas")
+    if interval < 10 or not 1 <= batch <= 100000:
+        parser.error("unsafe audit interval or batch size")
+    try:
+        os.nice(10)
+    except OSError:
+        pass
+    signal.signal(signal.SIGTERM, _stop)
+    signal.signal(signal.SIGINT, _stop)
+    registry = CasRegistry(Path(root))
+    cursor = None
+    while not _STOP:
+        results = registry.audit(max_blocks=batch, after_sha256=cursor)
+        for item in results:
+            print(json.dumps(item, sort_keys=True), flush=True)
+        cursor = results[-1]["sha256"] if len(results) == batch else None
+        for _ in range(interval):
+            if _STOP:
+                break
+            time.sleep(1)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

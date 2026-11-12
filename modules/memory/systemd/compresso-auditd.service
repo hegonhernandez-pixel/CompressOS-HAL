@@ -1,0 +1,20 @@
+[Unit]
+Description=CompressOS-HAL CAS integrity auditor
+After=local-fs.target
+ConditionPathExists=/etc/compresso/daemon-audit.conf
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/compresso-auditd --config /etc/compresso/daemon-audit.conf
+Restart=on-failure
+RestartSec=10
+Nice=10
+IOSchedulingClass=idle
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/compresso/cas
+
+[Install]
+WantedBy=multi-user.target

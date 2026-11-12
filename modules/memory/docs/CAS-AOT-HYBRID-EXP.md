@@ -8,8 +8,9 @@ Status: experimental user-space foundation. This is not kernel page swapping, a 
 - `compresso_cas.indexer.index_tree`: non-mutating ELF file indexer. It snapshots ELF files into CAS; it does not rewrite ELF headers, PLT/GOT, DT_NEEDED, syscalls, or opcodes.
 - `compresso_cas.policy.choose_route`: deterministic policy planner for critical/normal/background I/O, read/write direction, GPU availability, game mode and VRAM watermarks.
 - `compresso-cas`: CLI for indexing, auditing and printing route decisions.
+- `compresso-auditd`: low-priority periodic SHA-256 auditor with bounded batches and a rotating cursor; systemd unit is installed but not enabled automatically.
 - Four rulesets under `modules/memory/config`.
-- Buildroot external package `compresso-cas`, extending the existing external tree.
+- Buildroot external packages `compresso-cas` and optional `compresso-zvga`.
 
 ## CAS data model
 
@@ -17,7 +18,7 @@ Status: experimental user-space foundation. This is not kernel page swapping, a 
 
 `aliases(original_path PRIMARY KEY, sha256 REFERENCES blocks)`
 
-Blob URI is `cas://sha256/<digest>`. UUIDv5 is derived from the SHA-256 digest. The content hash remains the integrity authority; UUID is a stable alias, not a second integrity algorithm. Corrupt blobs are moved to `quarantine/`, marked `corrupt`, and must not be served. Missing blobs are marked `missing`. Both states indicate CPU fallback in the audit report.
+Blob URI is `cas://sha256/<digest>`. UUIDv5 is derived from the SHA-256 digest. The content hash remains the integrity authority; UUID is a stable alias, not a second integrity algorithm. Corrupt blobs are moved to `quarantine/`, marked `corrupt`, and must not be served. Missing blobs are marked `missing`. Both states indicate CPU fallback in the audit report. The periodic auditor verifies at most 64 blocks per cycle by default and advances through the registry so large stores are not permanently starved.
 
 ## I/O policy
 
@@ -31,9 +32,9 @@ The policy is a planner only. It does not transfer kernel pages, write sysfs, al
 
 ## Buildroot integration
 
-The existing external tree is `modules/memory/buildroot-external`; this change adds a Python/SQLite package. It does not claim to be a complete defconfig or a Mint ISO builder. Buildroot creates a separate target root filesystem. Mint remains the development host. The Buildroot release and Kconfig symbols must be pinned and validated against the chosen upstream release before claiming a reproducible full image build.
+The existing external tree is `modules/memory/buildroot-external`. It now contains a Python/SQLite CAS package, the existing memory configurator, and an optional C++17/Vulkan zVGA package. The Buildroot baseline is pinned to **2025.02.19 LTS** in `BUILDROOT_VERSION`; the x86_64 rootfs defconfig and host build scripts are included. The Vulkan package uses target Vulkan headers/loader, host `spirv-val` from Buildroot's `host-spirv-tools`, and host `glslangValidator` from the Mint build machine.
 
-The existing zVGA CMake/Vulkan worker remains a separate module. Its Buildroot package is deliberately not enabled by this change because the project has not yet pinned a Buildroot release and verified the Vulkan package symbols/toolchain combination. C++17, CMake, Vulkan headers/loader, glslang and spirv-tools are required for that next packaging step.
+This produces a separate root filesystem (EXT4 + TAR), not a Linux Mint ISO and not a complete bootable OS: a matching kernel, DRM driver/firmware and bootloader are still outside this profile. The full Buildroot build and target boot have not yet been run.
 
 ## Not implemented / explicitly deferred
 
@@ -46,6 +47,17 @@ The existing zVGA CMake/Vulkan worker remains a separate module. Its Buildroot p
 - Btrfs CAS storage integration and physical GPU performance claims.
 
 These require kernel/driver interfaces and hardware-specific validation; the historical architecture notes are design inputs, not evidence that those interfaces exist on Linux Mint 22.3.
+
+
+## Linux Mint host integration
+
+`scripts/install-cas-mint.sh` runs the CAS regression tests, installs the user-space package and rules, preserves existing configuration files, and enables the low-priority `compresso-auditd.service`. It does not alter swap, kernel parameters, Zswap, GPU sysfs or the existing memoryd service. Run it from the repository with:
+
+```bash
+sudo bash modules/memory/scripts/install-cas-mint.sh
+```
+
+`scripts/uninstall-cas-mint.sh` removes the CAS executables and service while deliberately preserving `/etc/compresso` and `/var/lib/compresso/cas`. These scripts are provided for the local Mint host; they have not been executed against the user's live machine from this session.
 
 ## Local tests
 
