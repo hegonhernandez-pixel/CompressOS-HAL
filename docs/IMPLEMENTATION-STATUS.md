@@ -69,3 +69,15 @@ Latest recovery-branch validation before this documentation update: [push CI pas
 ## Validation policy
 
 Do not repeat the already completed security-test campaign unless a new change creates a specific security regression concern. Run focused functional tests for changed behavior and the repository CI workflow. Do not claim runtime, ISO, GPU, compatibility, or performance validation until the corresponding test has actually run and its result is recorded.
+
+## Execution record — 2026-11-12 (front A)
+
+- Inspected the recovery branch supervisor and its tests against the corresponding implementation already merged into `main` by PR #3.
+- Identified a concrete diagnostic gap: the recovery branch accepted malformed or multiple bracketed ZRAM compressor markers as though the active algorithm were known.
+- Added focused regression cases for missing/blank compressor telemetry and ambiguous/malformed selections (including multiple bracketed values).
+- Updated the supervisor parser to accept exactly one well-formed bracketed token; missing telemetry reports `zram_algorithm_telemetry_missing`, while ambiguous/malformed state reports `zram_algorithm_state_unknown`. The supervisor remains read-only.
+- No security-test campaign was repeated. No commands were run on the user's physical computer.
+- TDD evidence: the test-only commit `a11de0f` failed at `Unit tests` as expected; after applying the supervisor correction, commit `5d911a4` passed `Unit tests`, `Compile Python` and `Shell syntax` in [push CI run 43259630148](https://github.com/hegonhernandez-pixel/CompressOS-HAL/actions/runs/43259630148). The later documentation-only commit does not have a separate CI run.
+- No new PR is opened at this point: the functional correction is already present in `main` through PR #3; this recovery-branch sync is not a new mainline feature.
+- Hardware validation on the available laptop (OS/kernel/GPU discovery, ZRAM/Zswap runtime), Mint ISO build and QEMU boot remain pending.
+
