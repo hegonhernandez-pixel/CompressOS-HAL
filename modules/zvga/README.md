@@ -83,7 +83,7 @@ Wire messages are capped at twice the maximum CSO1 container size and reading/se
 
 ## Remaining planned work
 
-Physical GPU and Mint testing, performance measurement, richer codecs, indexers/Fast-RAM caching, kernel adapters, Buildroot packaging and ISO/early-boot work remain separate milestones. This module establishes the explicit buffer path between engine, shader and daemon.
+Physical GPU and Mint testing, performance measurement, richer codecs, indexers/Fast-RAM caching, kernel adapters, full Buildroot rootfs compilation/boot and Mint ISO/early-boot work remain separate milestones. The optional zVGA Buildroot package and defconfig are present, but only defconfig resolution has been validated. This module establishes the explicit buffer path between engine, shader and daemon.
 
 
 <!-- /coderabbit-ai-generated:v1 -->
