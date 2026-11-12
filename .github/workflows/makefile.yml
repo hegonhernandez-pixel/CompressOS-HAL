@@ -2,7 +2,7 @@ name: CompressOS-HAL checks
 
 on:
   push:
-    branches: ["main", "recovery/import-memory-hal-2026-11-04"]
+    branches: ["main", "recovery/import-memory-hal-2026-11-04", "exp/cas-audit-hybrid-buildroot"]
   pull_request:
   workflow_dispatch:
 
@@ -19,7 +19,7 @@ jobs:
         run: PYTHONPATH=src python -m unittest discover -s tests -v
       - name: Compile Python
         working-directory: modules/memory
-        run: python -m compileall -q src tests
+        run: python -m compileall -q src tests && python -m py_compile scripts/compresso-cas
       - name: Shell syntax
         working-directory: modules/memory
         run: bash -n scripts/*.sh scripts/compressoctl
