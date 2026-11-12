@@ -44,7 +44,7 @@ def _parse_os_release(path):
         key, raw = line.split("=", 1)
         try:
             parsed = shlex.split(raw, comments=False, posix=True)
-            values[key] = parsed[0] if parsed else ""
+            values[key] = " ".join(parsed)
         except ValueError:
             values[key] = raw.strip().strip('"').strip("'")
     return values
