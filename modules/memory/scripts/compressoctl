@@ -11,6 +11,7 @@ Usage:
   compressoctl status
   compressoctl doctor
   compressoctl metrics
+  compressoctl hardware
   compressoctl benchmark --profile PROFILE [--memory-mib N] [--hold-seconds N] [--output FILE]
   compressoctl profile list
   compressoctl profile show
@@ -18,6 +19,7 @@ Usage:
   compressoctl engine compress|decompress|status|serve [OPTIONS]
   compressoctl help
 
+"hardware" reads host/GPU/Vulkan and active memory-layer information; it does not modify the system.
 "profile set" only updates the persistent PROFILE key in /etc/compresso/memory.conf.
 It does not apply a profile to the running kernel, change swap, or restart services.
 EOF
@@ -35,6 +37,9 @@ case "$command_name" in
     ;;
   metrics)
     exec python3 "$BASE/metrics.py" --stdout "$@"
+    ;;
+  hardware)
+    exec python3 "$BASE/hardware.py" "$@"
     ;;
   benchmark)
     exec python3 "$BASE/benchmark.py" "$@"
