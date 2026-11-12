@@ -107,6 +107,20 @@ sudo /usr/libexec/compresso/healthcheck.sh
 cat /proc/swaps
 ```
 
+## Read-only hardware inventory
+
+The installed CLI exposes a read-only host inventory:
+
+```bash
+compressoctl hardware
+```
+
+It emits JSON with Linux distribution/kernel/architecture, CPU model, DRM GPU vendor/device IDs and driver, render-node permissions, the `vulkaninfo --summary` result, active swap devices, ZRAM sysfs counters and Zswap parameters. It reports missing Vulkan tooling and timeouts explicitly. It does not reset a GPU, launch a compression workload, write sysfs, change swap, or start/stop services.
+
+Virtualization detection is deliberately conservative: recognized DMI/hypervisor markers are reported as `suspected_virtualized`; absence of a marker is `unknown`, never proof that the machine is physical. A successful Vulkan summary proves device enumeration only. To validate the actual shader/driver path, build and run the zVGA worker with `--backend vulkan` and retain its device/result output; software Vulkan is not physical-GPU evidence.
+
+For an initial hardware report, attach the complete JSON output together with the zVGA test output. Do not redact GPU IDs or driver versions if compatibility diagnosis is the goal; redact serial numbers if a later collector adds them.
+
 ## Tests
 
 From the source checkout:
