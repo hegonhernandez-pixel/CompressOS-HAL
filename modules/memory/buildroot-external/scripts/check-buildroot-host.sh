@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-required=(git make gcc g++ patch cpio rsync bc perl python3 file wget tar xz gzip bzip2 unzip flex bison cmake glslangValidator spirv-val)
+required=(git make gcc g++ patch cpio rsync bc perl python3 file wget tar xz gzip bzip2 unzip flex bison glslangValidator)
 missing=()
 for command_name in "${required[@]}"; do
   command -v "$command_name" >/dev/null 2>&1 || missing+=("$command_name")
@@ -12,7 +12,7 @@ fi
 if (("${#missing[@]}" > 0)); then
   printf 'Missing host tools: %s\n' "${missing[*]}" >&2
   echo "On Linux Mint/Ubuntu install them with:" >&2
-  echo "sudo apt-get update && sudo apt-get install -y build-essential git bc bison flex cpio file rsync unzip wget xz-utils glslang-tools spirv-tools cmake ninja-build" >&2
+  echo "sudo apt-get update && sudo apt-get install -y build-essential git bc bison flex cpio file rsync unzip wget xz-utils glslang-tools" >&2
   exit 1
 fi
 free_kb="$(df -Pk "$(pwd)" | awk 'NR==2 {print $4}')"
