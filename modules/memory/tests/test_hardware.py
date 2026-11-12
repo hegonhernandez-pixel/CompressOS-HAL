@@ -119,5 +119,13 @@ class HardwareProbeTests(unittest.TestCase):
         self.assertEqual(report["gpu"]["vulkan"]["reason"], "vulkaninfo_timeout")
 
 
+    def test_hardware_command_is_installed_and_exposed_by_compressoctl(self):
+        root = Path(__file__).parents[1]
+        cli = (root / "scripts" / "compressoctl").read_text()
+        installer = (root / "scripts" / "install-mint.sh").read_text()
+        self.assertIn('hardware)', cli)
+        self.assertIn('hardware.py" /usr/libexec/compresso/hardware.py', installer)
+
+
 if __name__ == "__main__":
     unittest.main()
