@@ -12,7 +12,7 @@
 ## Next changes
 - Add fake-sysfs integration fixtures for Zswap-only and hybrid writes.
 - Add read-only metricsd and health reporting; neither may write sysfs.
-- Pin Buildroot release and validate paths/Kconfig against that release.
+- Build and boot the pinned Buildroot 2025.02.19 rootfs; current CI validates defconfig resolution only.
 - Add a Mint live-image workflow only after choosing a Mint-compatible customization method.
 - Add Vulkan runtime only after CPU reference tests, SPIR-V validation, bounded buffers and output-equivalence tests.
 
