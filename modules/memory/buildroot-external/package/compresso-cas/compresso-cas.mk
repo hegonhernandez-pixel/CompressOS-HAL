@@ -8,10 +8,12 @@ define COMPRESSO_CAS_INSTALL_TARGET_CMDS
 	$(INSTALL) -d $(TARGET_DIR)/usr/lib/compresso/compresso_cas
 	$(INSTALL) -m 0644 $(@D)/*.py $(TARGET_DIR)/usr/lib/compresso/compresso_cas/
 	$(INSTALL) -D -m 0755 $(BR2_EXTERNAL_COMPRESSO_PATH)/../scripts/compresso-cas $(TARGET_DIR)/usr/bin/compresso-cas
+	$(INSTALL) -D -m 0755 $(BR2_EXTERNAL_COMPRESSO_PATH)/../scripts/compresso-auditd $(TARGET_DIR)/usr/bin/compresso-auditd
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_COMPRESSO_PATH)/../config/daemon-audit.conf $(TARGET_DIR)/etc/compresso/daemon-audit.conf
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_COMPRESSO_PATH)/../config/daemon-hybrid.conf $(TARGET_DIR)/etc/compresso/daemon-hybrid.conf
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_COMPRESSO_PATH)/../config/aot-rules.conf $(TARGET_DIR)/etc/compresso/aot-rules.conf
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_COMPRESSO_PATH)/../config/boot-index.conf $(TARGET_DIR)/etc/compresso/boot-index.conf
+	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_COMPRESSO_PATH)/../systemd/compresso-auditd.service $(TARGET_DIR)/usr/lib/systemd/system/compresso-auditd.service
 endef
 
 $(eval $(generic-package))
