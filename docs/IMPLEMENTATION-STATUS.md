@@ -1,7 +1,7 @@
 # CompressOS-HAL implementation status
 
 Updated: 2026-11-12
-Working branch: `recovery/import-memory-hal-2026-11-04`
+Working branch: `exp/physical-hardware-probe`
 Target platform: Linux Mint 22.3 XFCE
 
 This document records repository-backed implementation status. It distinguishes committed code from runtime validation and planned work.
@@ -14,9 +14,9 @@ This document records repository-backed implementation status. It distinguishes 
 | Systemd boot ordering | Removed `Before=swap.target` from `compresso-memoryd.service`; retained ordering after local filesystems and module loading. | Regression tests pass in CI. Real Mint boot validation is pending. |
 | Metrics / supervisor / benchmark | Read-only metrics, supervisor and bounded benchmark are present. The supervisor checks the active ZRAM compressor against the configured algorithm/fallbacks and now distinguishes Zswap as enabled, disabled or unknown. Missing/unreadable/unrecognized Zswap telemetry produces a warning instead of being treated as disabled. | Two focused regressions cover missing and unrecognized Zswap state; unit tests, Python compilation and shell syntax passed in CI at `9ec5f00`. Runtime Mint measurements remain pending. |
 | `compressoctl` profile management | Adds `profile list`, `profile show` and explicit `profile set`. The setter validates the selected profile against existing config and atomically changes only `PROFILE`; it rejects symlink configs and incompatible settings. The Mint installer preserves an existing config and refuses a config symlink. The CLI exposes read-only `status`, `doctor`, `metrics`, bounded `benchmark`, and explicit profile subcommands. | Nine focused CLI/profile tests are included in CI. `profile set` is configuration-only: it does not touch sysfs, swap or systemd services. Front B reviewed on 2026-11-12: current command surface and guarded profile workflows cover the scoped requirements; no duplicate implementation added. |
-| Buildroot | An experimental external-tree scaffold exists. | It is explicitly not a complete Buildroot defconfig or Mint ISO builder. |
-| Mint ISO integration | Not present yet. | No custom ISO build or QEMU boot has been validated. |
-| Early boot integration | Not present yet as a completed subsystem. | Pending. |
+| Buildroot | Pinned Buildroot 2025.02.19 external tree, x86_64 systemd defconfig, memoryd/CAS/optional zVGA packages and build scripts are present. | CI resolves the defconfig and package selections; full rootfs compilation and boot are still pending. It is not a Mint ISO builder. |
+| Mint ISO integration | Not present yet. | No custom Mint ISO build or QEMU/physical boot has been validated. |
+| Early boot integration | Not present yet as a completed subsystem. | Pending. |\n| Physical hardware inventory | Read-only `compressoctl hardware` probe added on `exp/physical-hardware-probe`: OS/kernel/CPU, DRM GPU/driver, render nodes, Vulkan device enumeration, active swaps, ZRAM and Zswap. | Latest CI passed all three jobs; 66 memory tests passed, including read-only and installed-style execution checks. Physical target execution remains pending. |
 <!-- coderabbit-ai-generated:v1 -->
 
 <!-- coderabbit-ai-generated-section:v1:5760d2e7691709b3014f5a9ad8f749e68a65eb3653551473be893a52a8c5a844 -->
@@ -52,19 +52,12 @@ Latest recovery-branch validation before this documentation update: [push CI pas
 
 ## Next implementation sequence
 
-1. Front B (`compressoctl`) was reviewed on 2026-11-12. The existing read/status commands and explicit configuration-only profile operations cover the scoped requirements; no concrete missing behavior justified duplicating or expanding the interface. Next scheduled implementation front: front A (Supervisor), inspect for one distinct diagnostic gap.
-2. When the target computer boots again, validate the updated unit graph on Linux Mint 22.3 and activate ZRAM only after checking the machine's existing swap configuration.
-3. Complete the memory subsystem's runtime lifecycle, including status verification and safe shutdown/swapoff behavior.
-4. Integrate the memory package into the Mint live-image build workflow; keep Buildroot as a separate experimental target rather than treating it as the Mint ISO builder.
-5. Implement early-boot integration.
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:e8bc19b43a707dc82b2d9d015c1349140389ce604d7d4d07dbbdeadfc08737b8 -->
-
-6. Validate the new zVGA/Vulkan buffer engine on physical GPUs and Mint. Capability checks, CPU fallback and a user daemon are implemented; performance, caching/indexers and any kernel codec integration remain pending.
-
-<!-- /coderabbit-ai-generated:v1 -->
-7. Build the ISO and validate boot and subsystem behavior in QEMU.
+1. Complete PR #10's read-only hardware inventory and require the complete memory, Vulkan and Buildroot-config CI checks to pass.
+2. Run `compressoctl hardware` on the target PC and record its actual OS, kernel, GPU IDs, driver, render-node permissions, Vulkan device list, ZRAM, Zswap and active swap layout.
+3. Build the zVGA worker on the target Mint system and force a Vulkan compression request with a known input. Record selected GPU, return code, output equality, fallback reason and CPU/Vulkan timing separately. A successful `vulkaninfo` summary alone is not shader execution evidence.
+4. Validate ZRAM and Zswap independently on that same machine, then test the selected hybrid profile with real swap counters and memory pressure. Preserve existing swap and do not automate `swapoff`.
+5. Only after the user-space GPU and kernel memory layers are individually verified, define and implement the real kernel/driver boundary. Vulkan user-space buffers are not automatically kernel swap pages.
+6. Add the Mint 22.3 live-image/remaster workflow as a separate deliverable; build a bootable ISO, smoke-test it in QEMU, then boot it on the target hardware. Keep the Buildroot rootfs path separate.
 
 ## Validation policy
 
@@ -81,3 +74,15 @@ Do not repeat the already completed security-test campaign unless a new change c
 - No new PR is opened at this point: the functional correction is already present in `main` through PR #3; this recovery-branch sync is not a new mainline feature.
 - Hardware validation on the available laptop (OS/kernel/GPU discovery, ZRAM/Zswap runtime), Mint ISO build and QEMU boot remain pending.
 
+
+
+## Execution record — 2026-11-12 (physical hardware inventory)
+
+- Confirmed PR #9 was merged into `main` at `387a0c7`; the Buildroot external defconfig exists but its full rootfs build and boot are not yet validated.
+- Audited the current zVGA path: it compresses explicit user-space buffers with a CPU reference and optional Vulkan worker. It is not wired into kernel swap or ZRAM/Zswap page migration.
+- Opened [PR #10](https://github.com/hegonhernandez-pixel/CompressOS-HAL/pull/10) from `exp/physical-hardware-probe`.
+- Added a test-first contract for read-only host/GPU/Vulkan and memory-layer inventory. The first CI run failed as expected with `ModuleNotFoundError: compresso.hardware`; the implementation was then added.
+- Added `compressoctl hardware`, installer wiring and documentation. The probe reports virtualization hints conservatively; no marker is not proof of physical hardware.
+- Latest [CI run 43297398740](https://github.com/hegonhernandez-pixel/CompressOS-HAL/actions/runs/43297398740) passed all three jobs: 66 memory tests plus Python/shell checks; Vulkan shader build, SPIR-V validation, software-Vulkan equivalence and daemon tests; Buildroot 2025.02.19 defconfig resolution. This does not validate a physical GPU, full Buildroot rootfs build, or Mint ISO.
+- No command has been run on the user's target PC. No physical GPU execution, real shader benchmark, Mint ISO build or boot validation is claimed.
+- Knowledge delta: `modules/memory/src/compresso/hardware.py`, `modules/memory/tests/test_hardware.py`, `modules/memory/scripts/compressoctl`, `modules/memory/scripts/install-mint.sh`, `modules/memory/README.md`, and this status record.
