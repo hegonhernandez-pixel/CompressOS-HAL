@@ -7,6 +7,7 @@ import shutil
 import sqlite3
 import tempfile
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Dict, List
 
@@ -35,10 +36,18 @@ class CasRegistry:
                 );
             """)
 
+    @contextmanager
     def _connect(self):
         db = sqlite3.connect(self.database)
         db.execute("PRAGMA foreign_keys=ON")
-        return db
+        try:
+            yield db
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
     @staticmethod
     def _hash(path: Path) -> tuple[str, int]:
