@@ -10,9 +10,14 @@ import re
 import shlex
 import stat
 import subprocess
+import sys
 from pathlib import Path
 
-from compresso.metrics import collect_metrics
+try:
+    from .metrics import collect_metrics
+except ImportError:  # direct execution from the installed libexec directory
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from compresso.metrics import collect_metrics
 
 
 _VIRTUAL_MARKERS = (
@@ -49,9 +54,10 @@ def _cpu_model(path):
     text = _read(path)
     if not text:
         return None
-    for line in text.splitlines():
-        if line.lower().startswith(("model name", "hardware", "processor")) and ":" in line:
-            return line.split(":", 1)[1].strip()
+    for prefix in ("model name", "hardware", "processor"):
+        for line in text.splitlines():
+            if line.lower().startswith(prefix) and ":" in line:
+                return line.split(":", 1)[1].strip()
     return None
 
 
