@@ -1,6 +1,6 @@
 # CompressOS-HAL implementation status
 
-Updated: 2026-11-11
+Updated: 2026-11-12
 Working branch: `recovery/import-memory-hal-2026-11-04`
 Target platform: Linux Mint 22.3 XFCE
 
@@ -13,7 +13,7 @@ This document records repository-backed implementation status. It distinguishes 
 | Memory daemon | Experimental ZRAM/Zswap profiles and `compresso-memoryd` are present under `modules/memory`. | Unit tests, Python compilation and shell syntax checks passed on recovery CI; real Mint runtime remains pending. |
 | Systemd boot ordering | Removed `Before=swap.target` from `compresso-memoryd.service`; retained ordering after local filesystems and module loading. | Regression tests pass in CI. Real Mint boot validation is pending. |
 | Metrics / supervisor / benchmark | Read-only metrics, supervisor and bounded benchmark are present. The supervisor checks the active ZRAM compressor against the configured algorithm/fallbacks and now distinguishes Zswap as enabled, disabled or unknown. Missing/unreadable/unrecognized Zswap telemetry produces a warning instead of being treated as disabled. | Two focused regressions cover missing and unrecognized Zswap state; unit tests, Python compilation and shell syntax passed in CI at `9ec5f00`. Runtime Mint measurements remain pending. |
-| `compressoctl` profile management | Adds `profile list`, `profile show` and explicit `profile set`. The setter validates the selected profile against existing config and atomically changes only `PROFILE`; it rejects symlink configs and incompatible settings. The Mint installer preserves an existing config and refuses a config symlink. | Nine focused CLI/profile tests are included in CI. `profile set` is configuration-only: it does not touch sysfs, swap or systemd services. |
+| `compressoctl` profile management | Adds `profile list`, `profile show` and explicit `profile set`. The setter validates the selected profile against existing config and atomically changes only `PROFILE`; it rejects symlink configs and incompatible settings. The Mint installer preserves an existing config and refuses a config symlink. The CLI exposes read-only `status`, `doctor`, `metrics`, bounded `benchmark`, and explicit profile subcommands. | Nine focused CLI/profile tests are included in CI. `profile set` is configuration-only: it does not touch sysfs, swap or systemd services. Front B reviewed on 2026-11-12: current command surface and guarded profile workflows cover the scoped requirements; no duplicate implementation added. |
 | Buildroot | An experimental external-tree scaffold exists. | It is explicitly not a complete Buildroot defconfig or Mint ISO builder. |
 | Mint ISO integration | Not present yet. | No custom ISO build or QEMU boot has been validated. |
 | Early boot integration | Not present yet as a completed subsystem. | Pending. |
@@ -33,13 +33,20 @@ This document records repository-backed implementation status. It distinguishes 
 - `5a74878`: clarify the profile validation boundary for `BACKING_SWAP`.
 - `9ec5f00`: distinguish unknown Zswap telemetry from an explicitly disabled state and add functional regression coverage.
 
-Latest recovery-branch validation: [push CI passed at `9ec5f00`](https://github.com/hegonhernandez-pixel/CompressOS-HAL/actions/runs/43033481841). The `memory-subsystem` job passed unit tests, Python compilation and shell syntax checks.
+Latest recovery-branch validation before this documentation update: [push CI passed at `a148f19`](https://github.com/hegonhernandez-pixel/CompressOS-HAL/actions/runs/43033764204). Its `memory-subsystem` job passed Unit tests, Compile Python and Shell syntax. Earlier code CI at [`9ec5f00`](https://github.com/hegonhernandez-pixel/CompressOS-HAL/actions/runs/43033481841) also passed. The current documentation-only commit will trigger/receive its own CI result separately; it is not claimed passed here.
 
-[PR #2](https://github.com/hegonhernandez-pixel/CompressOS-HAL/pull/2) was merged at `a52a40f` on 2026-11-10 before this execution. The existing [PR #4](https://github.com/hegonhernandez-pixel/CompressOS-HAL/pull/4) remains open for the later profile-management work and follows this recovery branch. This execution did not modify or merge `main`.
+[PR #2](https://github.com/hegonhernandez-pixel/CompressOS-HAL/pull/2) was merged at `a52a40f` on 2026-11-10. [PR #4](https://github.com/hegonhernandez-pixel/CompressOS-HAL/pull/4), which carried the profile-management work from this recovery branch, was merged at `22bf54c` on 2026-11-12. Both PRs are therefore closed/merged and cannot be updated further. This execution does not modify `main`.
+
+## Execution record — 2026-11-12 (front B)
+
+- Inspected the exact recovery branch, `compressoctl`, `profilectl.py`, supervisor, and profile CLI regression tests before deciding whether code changes were needed.
+- Confirmed the existing CLI exposes read-only `status`/`doctor`/`metrics`, bounded `benchmark`, and `profile list|show|set`; profile selection validates compatibility, rejects symlink/invalid configs, writes atomically, and explicitly does not apply kernel/swap/service changes.
+- No distinct functional gap was identified in front B. Per the alternating plan, next execution returns to front A.
+- No runtime commands were run on the user's computer; no Mint boot, ZRAM activation, Zswap activation, ISO build, or QEMU validation is claimed.
 
 ## Next implementation sequence
 
-1. Next scheduled repository implementation front: front B (`compressoctl`) after today's front A supervisor improvement; inspect for one concrete functional gap and preserve explicit, configuration-only profile boundaries.
+1. Front B (`compressoctl`) was reviewed on 2026-11-12. The existing read/status commands and explicit configuration-only profile operations cover the scoped requirements; no concrete missing behavior justified duplicating or expanding the interface. Next scheduled implementation front: front A (Supervisor), inspect for one distinct diagnostic gap.
 2. When the target computer boots again, validate the updated unit graph on Linux Mint 22.3 and activate ZRAM only after checking the machine's existing swap configuration.
 3. Complete the memory subsystem's runtime lifecycle, including status verification and safe shutdown/swapoff behavior.
 4. Integrate the memory package into the Mint live-image build workflow; keep Buildroot as a separate experimental target rather than treating it as the Mint ISO builder.
