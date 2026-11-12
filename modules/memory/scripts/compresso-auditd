@@ -4,8 +4,14 @@ import configparser
 import json
 import os
 import signal
+import sys
 import time
 from pathlib import Path
+
+# Buildroot and Mint installers place the package in this stable location.
+installed_lib = Path("/usr/lib/compresso")
+if installed_lib.is_dir():
+    sys.path.insert(0, str(installed_lib))
 
 from compresso_cas.registry import CasRegistry
 
