@@ -65,7 +65,7 @@ Do not repeat the already completed security-test campaign unless a new change c
 - Added focused regression cases for missing/blank compressor telemetry and ambiguous/malformed selections (including multiple bracketed values).
 - Updated the supervisor parser to accept exactly one well-formed bracketed token; missing telemetry reports `zram_algorithm_telemetry_missing`, while ambiguous/malformed state reports `zram_algorithm_state_unknown`. The supervisor remains read-only.
 - No security-test campaign was repeated. No commands were run on the user's physical computer.
-- Code and tests are committed on `recovery/import-memory-hal-2026-11-04`; CI for the final implementation commit must be checked before claiming validation.
+- TDD evidence: the test-only commit `a11de0f` failed at `Unit tests` as expected; after applying the supervisor correction, commit `5d911a4` passed `Unit tests`, `Compile Python` and `Shell syntax` in [push CI run 43259630148](https://github.com/hegonhernandez-pixel/CompressOS-HAL/actions/runs/43259630148). The later documentation-only commit does not have a separate CI run.
 - No new PR is opened at this point: the functional correction is already present in `main` through PR #3; this recovery-branch sync is not a new mainline feature.
 - Hardware validation on the available laptop (OS/kernel/GPU discovery, ZRAM/Zswap runtime), Mint ISO build and QEMU boot remain pending.
 
