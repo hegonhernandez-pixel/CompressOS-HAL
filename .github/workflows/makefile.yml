@@ -61,4 +61,7 @@ jobs:
           grep -E '^(BR2_EXTERNAL|BR2_PACKAGE_COMPRESSO|BR2_PACKAGE_PYTHON3|BR2_PACKAGE_VULKAN|BR2_INSTALL_LIBSTDCPP|BR2_INIT_SYSTEMD)' "$RUNNER_TEMP/compresso-buildroot/.config" || true
           grep -q '^BR2_PACKAGE_COMPRESSO_MEMORYD=y$' "$RUNNER_TEMP/compresso-buildroot/.config"
           grep -q '^BR2_PACKAGE_COMPRESSO_CAS=y$' "$RUNNER_TEMP/compresso-buildroot/.config"
-          grep -q '^BR2_PACKAGE_COMPRESSO_ZVGA=y$' "$RUNNER_TEMP/compresso-buildroot/.config"
+          grep -q '^BR2_PACKAGE_COMPRESSO_ZVGA=y
+ "$RUNNER_TEMP/compresso-buildroot/.config"
+          grep -q '^BR2_TOOLCHAIN_BUILDROOT_CXX=y
+ "$RUNNER_TEMP/compresso-buildroot/.config"
