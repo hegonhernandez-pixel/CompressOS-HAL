@@ -46,3 +46,18 @@ jobs:
           export COMPRESSO_VULKAN_HELPER="$PWD/build/zvga/compresso-vulkan"
           export COMPRESSO_INSTALLED_CLI="$RUNNER_TEMP/compresso/bin/compresso-engine"
           bash modules/zvga/scripts/test.sh
+
+  buildroot-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Buildroot configuration prerequisites
+        run: sudo apt-get update && sudo apt-get install -y bc bison flex cpio rsync
+      - name: Fetch pinned Buildroot LTS
+        run: git clone --depth 1 --branch 2025.02.19 https://gitlab.com/buildroot.org/buildroot.git buildroot-src
+      - name: Resolve CompressOS-HAL external defconfig
+        run: |
+          make -C buildroot-src O="$RUNNER_TEMP/compresso-buildroot" BR2_EXTERNAL="$GITHUB_WORKSPACE/modules/memory/buildroot-external" compresso_x86_64_defconfig
+          grep -q '^BR2_PACKAGE_COMPRESSO_MEMORYD=y$' "$RUNNER_TEMP/compresso-buildroot/.config"
+          grep -q '^BR2_PACKAGE_COMPRESSO_CAS=y$' "$RUNNER_TEMP/compresso-buildroot/.config"
+          grep -q '^BR2_PACKAGE_COMPRESSO_ZVGA=y$' "$RUNNER_TEMP/compresso-buildroot/.config"
