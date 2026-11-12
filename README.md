@@ -84,3 +84,12 @@ CompressOS-HAL — Experimental Linux optimization through resource intelligence
 
 - **Memory management (experimental):** ZRAM/Zswap profiles, metrics collection, a read-only health supervisor, and a bounded benchmark are maintained in [`modules/memory`](modules/memory/README.md). The initial integration targets an already-installed Linux Mint XFCE system; Mint 22.3 runtime validation and custom ISO integration are not yet complete.
 - **Platform development:** Fedora-specific distribution work remains in the separate [Fedora-compresSO repository](https://github.com/hegonhernandez-pixel/Fedora-compresSO). Its `main` and `exp/fast-zram-zswap-daemons` branches are preserved independently; this repository's `main` remains the canonical CompressOS-HAL core.
+
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:872c014b1c3a86f6d7fa5f040ad68b4211221fb6696d8ab11becab81ae62cb39 -->
+
+- **Compression engine / Vulkan (experimental):** [`modules/zvga`](modules/zvga/README.md) implements bounded user-space compression, a Vulkan compute shader, CPU fallback, and a local Linux user daemon. Hardware acceleration and kernel swap integration are not claimed.
+
+
+<!-- /coderabbit-ai-generated:v1 -->

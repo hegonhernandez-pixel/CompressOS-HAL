@@ -1,0 +1,27 @@
+#version 450
+// Each invocation owns one page and a fixed output slice; no atomics required.
+layout(local_size_x = 64) in;
+layout(set = 0, binding = 0, std430) readonly buffer Input { uint data[]; } input_data;
+layout(set = 0, binding = 1, std430) writeonly buffer Output { uint data[]; } output_data;
+layout(push_constant) uniform Parameters { uint size; } parameters;
+void main() {
+    uint page = gl_GlobalInvocationID.x;
+    uint start = page * 4096u;
+    if (start >= parameters.size) return;
+    uint end = min(start + 4096u, parameters.size);
+    uint base = page * 4097u;
+    uint count = 0u;
+    uint index = start;
+    while (index < end) {
+        uint value = input_data.data[index];
+        uint next = index + 1u;
+        while (next < end && next - index < 256u) {
+            if (input_data.data[next] != value) break;
+            next++;
+        }
+        output_data.data[base + 1u + count] = ((next - index - 1u) << 8u) | value;
+        count++;
+        index = next;
+    }
+    output_data.data[base] = count;
+}

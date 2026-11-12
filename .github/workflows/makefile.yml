@@ -23,3 +23,26 @@ jobs:
       - name: Shell syntax
         working-directory: modules/memory
         run: bash -n scripts/*.sh scripts/compressoctl
+
+  compression-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Vulkan build and software runtime dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build g++ libvulkan-dev mesa-vulkan-drivers glslang-tools spirv-tools
+      - name: Build and validate shader
+        run: cmake -S modules/zvga -B build/zvga -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/compresso" && cmake --build build/zvga
+      - name: Install into temporary prefix
+        run: cmake --install build/zvga
+      - name: CPU, Vulkan equivalence and daemon checks
+        shell: bash
+        run: |
+          icds=(/usr/share/vulkan/icd.d/lvp_icd*.json)
+          test -f "${icds[0]}"
+          export VK_ICD_FILENAMES="${icds[0]}"
+          export COMPRESSO_VULKAN_HELPER="$PWD/build/zvga/compresso-vulkan"
+          export COMPRESSO_INSTALLED_CLI="$RUNNER_TEMP/compresso/bin/compresso-engine"
+          bash modules/zvga/scripts/test.sh
