@@ -89,7 +89,7 @@ A valid hardware checkpoint must show the intended GPU model in the worker log a
 ## Development branches
 
 - `main` is the canonical integration branch for CompressOS-HAL.
-- `exp/*` branches are experimental work areas; preserve their history and integrate completed changes into `main) through reviewable merges.
+- `exp/*` branches are experimental work areas; preserve their history and integrate completed changes into `main` through reviewable merges.
 - `recovery/*` branches are retained as recovery/reference history, not as alternate canonical branches.
 - Automated review branches are retained for traceability; do not treat them as independent releases.
 
