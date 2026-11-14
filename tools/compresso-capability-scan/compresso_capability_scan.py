@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 import argparse
+import base64
 import json
 import os
 import platform
 import re
 import shutil
 import subprocess
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 def run(cmd, timeout=8):
@@ -176,25 +179,82 @@ def classify_capabilities(facts):
     gpu = facts.get("gpu",{})
     software = facts.get("software",{})
     ai = facts.get("ai",{})
+    validation = facts.get("validation",{})
     vulkan = bool(gpu.get("vulkan"))
     vram = float(gpu.get("vram_gb") or 0)
     lemonade = bool(ai.get("lemonade"))
+
+    backends = ai.get("backends") or ""
+    downloaded = ai.get("downloaded_models") or ""
+    sd_vulkan_installed = bool(re.search(r"sd-cpp[\\s\\S]{0,300}vulkan[\\s\\S]{0,120}installed", backends, re.I))
+    image_model_downloaded = bool(re.search(r"^(SD-Turbo|SDXL|SD-1\\.5|Anima-)", downloaded, re.I | re.M))
+    image_installed = lemonade and sd_vulkan_installed and image_model_downloaded
+    image_candidate = vulkan and ram >= 8 and (disk >= 5 or image_installed)
+    image_validated = bool(validation.get("image_generation"))
+    image_warnings = []
+    if disk < 10:
+        image_warnings.append("low_disk_space")
+    if vram < 6:
+        image_warnings.append("limited_vram")
+
     chat_ready = lemonade and ram >= 8
-    image_candidate = vulkan and ram >= 8 and disk >= 10
     video_local = vulkan and vram >= 8 and ram >= 24 and disk >= 30
     audio_candidate = bool(software.get("ffmpeg")) or lemonade
     automation_candidate = bool(software.get("n8n") or software.get("node") or software.get("docker") or software.get("python3"))
+
     return {"profiles": {
         "local_chat": {"ready": chat_ready, "candidate": ram >= 8, "reason": "Lemonade + >=8 GB RAM" if chat_ready else "Requires a local AI runtime and sufficient RAM", "recommended_backends": ["llamacpp:vulkan"] if vulkan else ["llamacpp:cpu"]},
-        "image_generation": {"ready": False, "candidate": image_candidate, "reason": "Vulkan-capable GPU and sufficient disk/RAM detected" if image_candidate else "Needs Vulkan-capable GPU plus storage/RAM validation", "recommended_backends": ["sd-cpp:vulkan"] if vulkan else ["sd-cpp:cpu"], "note": "Candidate means worth testing; actual model fit depends on VRAM/RAM/model size."},
+        "image_generation": {
+            "ready": image_validated,
+            "candidate": image_candidate,
+            "installed": image_installed,
+            "validated": image_validated,
+            "reason": "Image runtime/model detected; run the smoke test to prove generation." if image_installed and not image_validated else ("Image generation smoke test passed." if image_validated else "Vulkan-capable GPU detected; runtime/model installation still needs validation."),
+            "recommended_backends": ["sd-cpp:vulkan"] if vulkan else ["sd-cpp:cpu"],
+            "warnings": image_warnings,
+            "note": "Capability is separated into candidate, installed, and validated; only a successful generation test marks ready=true."
+        },
         "video_generation": {"ready": video_local, "candidate": vulkan and ram >= 16, "mode": "local_candidate" if video_local else "hybrid_or_remote", "reason": "Local video is hardware/model dependent; low VRAM should use remote or hybrid processing."},
         "audio_transcription": {"ready": False, "candidate": audio_candidate, "recommended_backends": ["whispercpp:vulkan"] if vulkan else ["moonshine:cpu", "whispercpp:cpu"]},
         "automation": {"ready": bool(software.get("n8n")), "candidate": automation_candidate, "recommended_stack": ["n8n", "MCP", "Python", "Node.js"]},
     }}
 
-def build_report():
+def test_image_generation(model="SD-Turbo", output_path="compresso-image-smoke.png"):
+    payload = json.dumps({
+        "model": model,
+        "prompt": "A small geometric orange cube on a neutral gray background, studio lighting",
+        "size": "512x512",
+        "steps": 4,
+        "response_format": "b64_json",
+        "seed": 12345,
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "http://localhost:13305/v1/images/generations",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=600) as response:
+            body = json.loads(response.read().decode("utf-8"))
+        encoded = body["data"][0]["b64_json"]
+        image_bytes = base64.b64decode(encoded)
+        Path(output_path).write_bytes(image_bytes)
+        return {"ok": True, "model": model, "output": str(Path(output_path).resolve()), "bytes": len(image_bytes)}
+    except (urllib.error.URLError, urllib.error.HTTPError, KeyError, IndexError, ValueError, OSError) as exc:
+        return {"ok": False, "model": model, "error": str(exc)}
+
+def build_report(validation=None):
     report = {"os": detect_os(), "cpu": detect_cpu(), "memory": detect_memory(), "storage": detect_storage(), "gpu": detect_gpu(), "audio": detect_audio(), "software": detect_software(), "ai": detect_lemonade()}
-    report["assessment"] = classify_capabilities({"memory": report["memory"], "storage": report["storage"], "gpu": report["gpu"], "software": report["software"], "ai": {"lemonade": report["ai"]["lemonade"]}})
+    report["validation"] = validation or {}
+    report["assessment"] = classify_capabilities({
+        "memory": report["memory"],
+        "storage": report["storage"],
+        "gpu": report["gpu"],
+        "software": report["software"],
+        "ai": report["ai"],
+        "validation": {"image_generation": bool((validation or {}).get("image_generation", {}).get("ok"))},
+    })
     return report
 
 def markdown(report):
@@ -212,8 +272,14 @@ def main():
     ap.add_argument("--json", dest="json_path", default="compresso-scan.json")
     ap.add_argument("--report", dest="report_path", default="compresso-scan.md")
     ap.add_argument("--stdout", action="store_true")
+    ap.add_argument("--test-image", action="store_true", help="Run a real local SD-Turbo 512x512 generation smoke test")
+    ap.add_argument("--image-model", default="SD-Turbo", help="Lemonade image model used by --test-image")
+    ap.add_argument("--image-output", default="compresso-image-smoke.png", help="PNG output path for --test-image")
     args = ap.parse_args()
-    report = build_report()
+    validation = {}
+    if args.test_image:
+        validation["image_generation"] = test_image_generation(args.image_model, args.image_output)
+    report = build_report(validation)
     Path(args.json_path).write_text(json.dumps(report, ensure_ascii=False, indent=2))
     Path(args.report_path).write_text(markdown(report))
     if args.stdout:
