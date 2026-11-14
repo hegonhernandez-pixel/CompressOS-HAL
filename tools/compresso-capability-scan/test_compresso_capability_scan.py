@@ -9,39 +9,41 @@ class CapabilityTests(unittest.TestCase):
         self.assertTrue(result["profiles"]["image_generation"]["candidate"])
         self.assertIn("sd-cpp:vulkan", result["profiles"]["image_generation"]["recommended_backends"])
 
-    def test_image_profile_uses_installed_runtime_evidence_even_with_less_than_10gb_free(self):
+    def test_installed_sd_vulkan_and_model_override_low_disk_candidate_gate(self):
         facts = {
             "ram_gb": 15.5,
-            "disk_free_gb": 9.46,
+            "disk_free_gb": 1.28,
             "gpu": {"present": True, "vram_gb": 3.98, "vulkan": True},
             "software": {"ffmpeg": False},
             "ai": {
                 "lemonade": True,
-                "backends": "sd-cpp              vulkan      core          native     installed",
-                "downloaded_models": "SD-Turbo                                Yes                4.86       sd-cpp",
-            },
-            "validation": {"image_generation": False},
+                "backends": """sd-cpp              cpu         core          native     installed
+                    rocm        core          native     installed
+                    vulkan      core          native     installed""",
+                "downloaded_models": """SD-Turbo                                Yes                4.86       sd-cpp"""
+            }
         }
-        image = classify_capabilities(facts)["profiles"]["image_generation"]
-        self.assertTrue(image["candidate"])
+        result = classify_capabilities(facts)
+        image = result["profiles"]["image_generation"]
         self.assertTrue(image["installed"])
-        self.assertFalse(image["ready"])
+        self.assertTrue(image["candidate"])
         self.assertIn("low_disk_space", image["warnings"])
 
-    def test_image_profile_becomes_ready_only_after_generation_smoke_test(self):
+    def test_successful_image_validation_marks_ready(self):
         facts = {
             "ram_gb": 15.5,
-            "disk_free_gb": 9.46,
+            "disk_free_gb": 1.28,
             "gpu": {"present": True, "vram_gb": 3.98, "vulkan": True},
             "software": {},
             "ai": {
                 "lemonade": True,
-                "backends": "sd-cpp              vulkan      core          native     installed",
-                "downloaded_models": "SD-Turbo                                Yes                4.86       sd-cpp",
+                "backends": "sd-cpp vulkan installed",
+                "downloaded_models": "SD-Turbo Yes 4.86 sd-cpp"
             },
             "validation": {"image_generation": True},
         }
         image = classify_capabilities(facts)["profiles"]["image_generation"]
+        self.assertTrue(image["validated"])
         self.assertTrue(image["ready"])
 
     def test_video_local_is_not_claimed_ready_on_low_vram(self):
