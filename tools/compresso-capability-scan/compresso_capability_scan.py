@@ -186,8 +186,8 @@ def classify_capabilities(facts):
 
     backends = ai.get("backends") or ""
     downloaded = ai.get("downloaded_models") or ""
-    sd_vulkan_installed = bool(re.search(r"sd-cpp[\\s\\S]{0,300}vulkan[\\s\\S]{0,120}installed", backends, re.I))
-    image_model_downloaded = bool(re.search(r"^(SD-Turbo|SDXL|SD-1\\.5|Anima-)", downloaded, re.I | re.M))
+    sd_vulkan_installed = bool(re.search(r"sd-cpp[\s\S]{0,500}vulkan[\s\S]{0,160}installed", backends, re.I))
+    image_model_downloaded = bool(re.search(r"^(SD-Turbo|SDXL|SD-1\.5|Anima-)", downloaded, re.I | re.M))
     image_installed = lemonade and sd_vulkan_installed and image_model_downloaded
     image_candidate = vulkan and ram >= 8 and (disk >= 5 or image_installed)
     image_validated = bool(validation.get("image_generation"))
