@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+printf 'MOCK lemonade: %s\n' "$*" >> "${MOCK_LOG:?}"
+
+if [[ "${1:-}" == "backends" && "${2:-}" == "--all" ]]; then
+  printf 'llamacpp:vulkan\n'
+fi
+
+exit 0

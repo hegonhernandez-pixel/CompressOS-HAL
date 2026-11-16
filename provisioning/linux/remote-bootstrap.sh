@@ -2,6 +2,7 @@
 set -euo pipefail
 
 APPLY=0
+INSTALL_HAL=0
 ENABLE_MEMORY=0
 BUILD_ZVGA=0
 INSTALL_LEMONADE=0
@@ -23,6 +24,8 @@ Options:
   --profile NAME        creator|business|personal (default: creator)
   --report-dir PATH     Where to store reports
   --apply               Allow installation changes
+  --install-ai-stack   Install Lemonade + HAL + zVGA
+  --install-hal        Install HAL memory module
   --install-lemonade    Install Lemonade from the official stable PPA (requires --apply)
   --build-zvga          Install build deps, build shader/worker and run bounded tests (requires --apply)
   --enable-memory       Install and explicitly enable compresso-memoryd after dry-run (requires --apply)
@@ -44,6 +47,12 @@ while (($#)); do
     --profile) PROFILE="${2:-}"; shift 2 ;;
     --report-dir) REPORT_DIR="${2:-}"; shift 2 ;;
     --apply) APPLY=1; shift ;;
+    --install-ai-stack)
+      INSTALL_HAL=1
+      INSTALL_LEMONADE=1
+      BUILD_ZVGA=1
+      shift ;;
+  --install-hal) INSTALL_HAL=1; shift ;;
     --install-lemonade) INSTALL_LEMONADE=1; shift ;;
     --build-zvga) BUILD_ZVGA=1; shift ;;
     --enable-memory) ENABLE_MEMORY=1; shift ;;
@@ -74,10 +83,6 @@ log "Mode: $([[ "$APPLY" -eq 1 ]] && echo APPLY || echo CHECK-ONLY)"
 log "Profile: $PROFILE"
 log "OS: ${PRETTY_NAME:-unknown}"
 
-command -v sudo >/dev/null || die "sudo is required for provisioning"
-if ! sudo -n true 2>/dev/null; then
-  log "sudo requires interactive authorization. Remote operator must obtain client authorization before APPLY operations."
-fi
 
 run_scan() {
   local scanner="$REPO_DIR/tools/compresso-capability-scan/compresso_capability_scan.py"
@@ -97,33 +102,33 @@ if [[ "$APPLY" -ne 1 ]]; then
   exit 0
 fi
 
+if [[ "$ENABLE_MEMORY" -eq 1 && "$INSTALL_HAL" -ne 1 ]]; then
+  die "--enable-memory requires --install-hal"
+fi
+
+if [[ "$INSTALL_HAL" -eq 0 && "$INSTALL_LEMONADE" -eq 0 && "$BUILD_ZVGA" -eq 0 ]]; then
+  log "No modules selected. Nothing to install."
+  exit 0
+fi
+
+command -v sudo >/dev/null || die "sudo is required for provisioning"
+if ! sudo -n true 2>/dev/null; then
+  log "sudo requires interactive authorization. Remote operator must obtain client authorization before APPLY operations."
+fi
+
+
 sudo -v
 
 install_base_deps() {
-  log "Installing validated Mint/Ubuntu base, Vulkan and creator dependencies"
+  log "Installing common dependencies"
   sudo apt-get update
-  sudo apt-get install -y     software-properties-common ca-certificates curl git python3 systemd util-linux     cmake ninja-build g++ libvulkan-dev mesa-vulkan-drivers vulkan-tools     glslang-tools spirv-tools ffmpeg
+  sudo apt-get install -y ca-certificates curl git python3
 }
 
-install_lemonade() {
-  log "Installing Lemonade Server from the official stable PPA"
-  sudo add-apt-repository -y ppa:lemonade-team/stable
-  sudo apt-get update
-  sudo apt-get install -y lemonade-server
-  lemonade status --json > "$REPORT_DIR/lemonade-status.json" 2>"$REPORT_DIR/lemonade-status.err" || true
-
-  # Install only backends that the local Lemonade catalog advertises.
-  local catalog
-  catalog="$(lemonade backends --all 2>/dev/null || true)"
-  printf '%s\n' "$catalog" > "$REPORT_DIR/lemonade-backends.txt"
-  for backend in llamacpp:vulkan whispercpp:vulkan sd-cpp:vulkan moonshine:cpu onnxruntime:cpu; do
-    if grep -Fq "$backend" <<<"$catalog"; then
-      log "Installing Lemonade backend: $backend"
-      lemonade backends install "$backend" || log "Backend failed and was left for review: $backend"
-    else
-      log "Backend not advertised on this host; skipping: $backend"
-    fi
-  done
+install_zvga_deps() {
+  log "Installing zVGA build dependencies"
+  sudo apt-get install -y cmake ninja-build g++ libvulkan-dev \
+    mesa-vulkan-drivers vulkan-tools glslang-tools spirv-tools
 }
 
 install_memory() {
@@ -149,14 +154,20 @@ build_zvga() {
   COMPRESSO_VULKAN_HELPER="$REPO_DIR/build/zvga/compresso-vulkan"     bash "$REPO_DIR/modules/zvga/scripts/test.sh" | tee "$REPORT_DIR/zvga-test.txt"
 }
 
-install_base_deps
-install_memory
+if [[ "$INSTALL_HAL" -eq 1 || "$INSTALL_LEMONADE" -eq 1 || "$BUILD_ZVGA" -eq 1 ]]; then
+  install_base_deps
+fi
+
+if [[ "$INSTALL_HAL" -eq 1 ]]; then
+  install_memory
+fi
 
 if [[ "$INSTALL_LEMONADE" -eq 1 ]]; then
-  install_lemonade
+  bash "$REPO_DIR/provisioning/linux/install-lemonade.sh" "$REPORT_DIR"
 fi
 
 if [[ "$BUILD_ZVGA" -eq 1 ]]; then
+  install_zvga_deps
   build_zvga
 fi
 
