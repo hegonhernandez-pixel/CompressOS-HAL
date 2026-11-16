@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+printf 'MOCK sudo: %s\n' "$*" >> "${MOCK_LOG:?}"
+
+if [[ "${1:-}" == "-n" || "${1:-}" == "-v" ]]; then
+  exit 0
+fi
+
+exit 0

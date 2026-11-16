@@ -86,3 +86,16 @@ Do not repeat the already completed security-test campaign unless a new change c
 - Latest [CI run 43297398740](https://github.com/hegonhernandez-pixel/CompressOS-HAL/actions/runs/43297398740) passed all three jobs: 66 memory tests plus Python/shell checks; Vulkan shader build, SPIR-V validation, software-Vulkan equivalence and daemon tests; Buildroot 2025.02.19 defconfig resolution. This does not validate a physical GPU, full Buildroot rootfs build, or Mint ISO.
 - No command has been run on the user's target PC. No physical GPU execution, real shader benchmark, Mint ISO build or boot validation is claimed.
 - Knowledge delta: `modules/memory/src/compresso/hardware.py`, `modules/memory/tests/test_hardware.py`, `modules/memory/scripts/compressoctl`, `modules/memory/scripts/install-mint.sh`, `modules/memory/README.md`, and this status record.
+
+## Execution record — 2026-11-16 (modular AI Stack)
+
+- Branch: `feature/modular-installer-lemonade`.
+- Commit: `93ed930`.
+- Added independent HAL, Lemonade and zVGA installation selection.
+- Added combined `--install-ai-stack` selection.
+- Four mocked installation simulations passed.
+- Functional test scripts passed before commit.
+- No real installation or performance validation is claimed.
+- Memory services remain disabled unless explicitly requested.
+- Pending: profile-specific tests, clean Mint installation,
+  rollback validation and commercial deployment readiness.
