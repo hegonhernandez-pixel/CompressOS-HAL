@@ -25,3 +25,12 @@ The branch comparisons reported no commits unique to these four branch tips rela
 - Keep recovery and experiment refs until their contents have been reviewed and their retention is explicitly approved.
 - New experimental work starts from the current `main` and is merged back through a pull request.
 - Record physical test evidence in documentation, including exact device identification and limitations.
+
+## Modular AI Stack development — 2026-11-16
+
+- Branch: `feature/modular-installer-lemonade`.
+- Commit: `93ed930`, pushed to origin.
+- Scope: modular HAL, Lemonade and zVGA provisioning.
+- Status: experimental; documentation and PR preparation ongoing.
+- `main` remains unchanged by this work.
+- Integration target must be verified before opening the PR.
