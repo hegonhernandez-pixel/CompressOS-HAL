@@ -10,6 +10,9 @@ The installer supports independent module selection:
 - Lemonade: Local AI inference server.
 - zVGA: Experimental Vulkan compression engine.
 - AI Stack: HAL + Lemonade + zVGA.
+- Node.js: optional LTS prerequisite checker (independent; not part of AI Stack).
+
+Node.js is not a dependency of HAL, Lemonade or zVGA. n8n is intentionally not installed.
 
 ## Installation modes
 
@@ -34,6 +37,17 @@ bash provisioning/linux/remote-bootstrap.sh \
 
 bash provisioning/linux/remote-bootstrap.sh \
   --repo-dir "$PWD" --apply --build-zvga
+
+### Optional Node.js LTS prerequisite check
+
+The optional flag checks for a supported installed Node.js/npm combination. It **does not** download Node.js, add repositories, replace a version, or run remote scripts. If the requested major is absent, it reports the official download instructions and stops. Install manually after reviewing compatibility, then retry.
+
+```bash
+bash provisioning/linux/remote-bootstrap.sh \
+  --repo-dir "$PWD" --apply --install-node --node-major 24
+```
+
+The default Node major is 24; supported choices: 22, 24, 26. Check current support at https://nodejs.org/en/about/previous-releases.
 
 ### Complete AI Stack
 
