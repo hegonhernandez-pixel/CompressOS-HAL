@@ -6,6 +6,8 @@ INSTALL_HAL=0
 ENABLE_MEMORY=0
 BUILD_ZVGA=0
 INSTALL_LEMONADE=0
+INSTALL_NODE=0
+NODE_MAJOR="24"
 PROFILE="creator"
 REPO_DIR=""
 REPORT_DIR="${HOME}/compresso-provisioning-report"
@@ -25,6 +27,8 @@ Options:
   --report-dir PATH     Where to store reports
   --apply               Allow installation changes
   --install-ai-stack   Install Lemonade + HAL + zVGA
+  --install-node       Check Node.js/npm LTS; never install without explicit preparation (requires --apply)
+  --node-major MAJOR   Node.js major for the optional check: 22|24|26 (default: 24)
   --install-hal        Install HAL memory module
   --install-lemonade    Install Lemonade from the official stable PPA (requires --apply)
   --build-zvga          Install build deps, build shader/worker and run bounded tests (requires --apply)
@@ -54,6 +58,8 @@ while (($#)); do
       shift ;;
   --install-hal) INSTALL_HAL=1; shift ;;
     --install-lemonade) INSTALL_LEMONADE=1; shift ;;
+    --install-node) INSTALL_NODE=1; shift ;;
+    --node-major) NODE_MAJOR="${2:-}"; shift 2 ;;
     --build-zvga) BUILD_ZVGA=1; shift ;;
     --enable-memory) ENABLE_MEMORY=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -106,7 +112,7 @@ if [[ "$ENABLE_MEMORY" -eq 1 && "$INSTALL_HAL" -ne 1 ]]; then
   die "--enable-memory requires --install-hal"
 fi
 
-if [[ "$INSTALL_HAL" -eq 0 && "$INSTALL_LEMONADE" -eq 0 && "$BUILD_ZVGA" -eq 0 ]]; then
+if [[ "$INSTALL_HAL" -eq 0 && "$INSTALL_LEMONADE" -eq 0 && "$BUILD_ZVGA" -eq 0 && "$INSTALL_NODE" -eq 0 ]]; then
   log "No modules selected. Nothing to install."
   exit 0
 fi
@@ -158,6 +164,10 @@ if [[ "$INSTALL_HAL" -eq 1 || "$INSTALL_LEMONADE" -eq 1 || "$BUILD_ZVGA" -eq 1 ]
   install_base_deps
 fi
 
+if [[ "$INSTALL_NODE" -eq 1 ]]; then
+  bash "$REPO_DIR/provisioning/linux/install-node.sh" "$NODE_MAJOR"
+fi
+
 if [[ "$INSTALL_HAL" -eq 1 ]]; then
   install_memory
 fi
@@ -178,6 +188,7 @@ run_scan || true
   printf 'profile=%s\n' "$PROFILE"
   printf 'os=%s\n' "${PRETTY_NAME:-unknown}"
   printf 'lemonade_requested=%s\n' "$INSTALL_LEMONADE"
+  printf 'node_requested=%s\n' "$INSTALL_NODE"
   printf 'zvga_requested=%s\n' "$BUILD_ZVGA"
   printf 'memory_enabled=%s\n' "$ENABLE_MEMORY"
   printf 'completed_at=%s\n' "$(date --iso-8601=seconds)"
