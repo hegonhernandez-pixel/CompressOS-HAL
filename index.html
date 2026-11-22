@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Soporte Linux · CompressOS Agent Factory</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./factory.css">
+  <script type="module" src="./usuario.js"></script>
+</head>
+<body class="support">
+  <a class="skip" href="#main">Saltar al contenido</a>
+  <header class="topbar">
+    <div class="shell bar-inner">
+      <a class="wordmark" href="./"><span aria-hidden="true">◈</span><strong>CompressOS</strong> <small>Agent Factory</small></a>
+      <nav aria-label="Navegación principal">
+        <a href="./">Portal</a><a href="./mensajes.html">Mensajes</a><a href="./laboratorio.html">Laboratorio</a><a href="./?rol=tecnico">Modo Técnico</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell" id="main">
+    <div class="intro support-intro">
+      <div><p class="eyebrow">COMPRESSOS AGENT FACTORY</p><h1 id="page-title">Portal de soporte Linux</h1>
+      <p id="page-description">Escribe al técnico, prepara tu equipo y elige qué puede hacer durante el enlace.</p></div>
+      <output class="pill" id="connection" aria-live="polite">Preparando portal</output>
+    </div>
+    <p id="notice" class="notice" role="status" hidden></p>
+    <section id="visitor" class="support-layout">
+      <article class="panel">
+        <h2>Mensajes de soporte</h2>
+        <form id="name-form" class="inline">
+          <label>Nombre visible <input id="visitor-name" maxlength="60" autocomplete="nickname" value="Visitante"></label>
+          <button>Actualizar</button>
+        </form>
+        <ul class="conversation" id="visitor-messages" aria-label="Conversación"></ul>
+        <form id="visitor-send" class="inline">
+          <label>Mensaje <input name="text" maxlength="2000" autocomplete="off" required></label><button class="primary">Enviar</button>
+        </form>
+      </article>
+      <article class="panel">
+        <h2>Conecta tu equipo</h2>
+        <p>Descarga el agente y ejecuta el comando en una terminal de la computadora que necesita soporte.</p>
+        <a class="button" href="./agent.py" download>Descargar agent.py</a>
+        <pre id="quickstart">python3 agent.py --help</pre>
+        <form id="pair-form">
+          <label>Token del técnico <input name="token" autocomplete="off" spellcheck="false" maxlength="36" required></label>
+          <label>Código local de la terminal <input id="csrf" type="password" autocomplete="off" maxlength="100" required></label>
+          <label class="check"><input id="allow-service" type="checkbox"> Permitir control de los servicios CompressOS</label>
+          <label class="check"><input id="allow-diagnostics" type="checkbox"> Compartir diagnósticos y telemetría</label>
+          <div class="actions"><button class="primary" id="pair-button">Solicitar enlace</button>
+            <button id="consent" type="button">Actualizar permisos</button></div>
+        </form>
+        <button class="danger" id="disconnect" type="button">Desconectar</button>
+      </article>
+    </section>
+    <section class="panel auth" id="technician-login" hidden>
+      <h2>Acceso del técnico</h2>
+      <form id="login">
+        <label>Correo <input name="email" type="email" autocomplete="username" required></label>
+        <label>Contraseña <input name="password" type="password" autocomplete="current-password" required></label>
+        <button class="primary">Entrar</button>
+      </form>
+    </section>
+    <section id="technician" hidden>
+      <div class="support-layout">
+        <article class="panel visitors">
+          <div class="panel-heading"><h2>Sala de espera</h2><output id="visitor-count" class="pill">0 en línea</output></div>
+          <ul id="lobby" class="lobby" aria-label="Visitantes"></ul>
+          <button id="logout" type="button">Cerrar sesión</button>
+        </article>
+        <article class="panel">
+          <div class="panel-heading"><h2 id="selected-title">Conversación</h2><button id="issue" type="button" disabled>Generar y enviar token</button></div>
+          <p id="link-alert" role="status" hidden></p>
+          <ul class="conversation" id="tech-messages" aria-label="Conversación"></ul>
+          <form id="tech-send" class="inline">
+            <label>Mensaje <input name="text" maxlength="2000" autocomplete="off" required></label><button class="primary" disabled>Enviar</button>
+          </form>
+        </article>
+      </div>
+      <div class="panel toolbox">
+        <div class="panel-heading"><h2>Equipo vinculado</h2><output id="device-state" class="pill">Sin equipo</output></div>
+        <div class="actions" id="controls">
+          <button type="button" data-control="active" disabled>Activar</button>
+          <button type="button" data-control="paused" disabled>Pausar</button>
+          <button type="button" data-control="stopped" class="danger" disabled>Detener</button>
+        </div>
+        <div id="metrics" class="metrics"></div>
+        <details><summary>Estado de servicios HAL, Lemonade y AnythingLLM</summary><pre id="services">Sin datos</pre></details>
+        <div class="actions" id="diagnostics"></div>
+        <details open><summary>Diagnósticos y resultados</summary><div id="action-results"></div></details>
+        <details><summary>Auditoría</summary><ul id="audit"></ul></details>
+      </div>
+      <section class="panel toolbox" id="catalog">
+        <h2>Operaciones y planificación</h2>
+        <div class="actions" id="catalog-tabs" aria-label="Áreas de Factory"></div>
+        <div id="catalog-content"></div>
+      </section>
+    </section>
+  </main>
+  <footer class="shell footer">CompressOS <span>Soporte Linux y Laboratorio de IA</span></footer>
+</body>
+</html>

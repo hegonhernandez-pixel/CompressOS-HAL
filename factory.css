@@ -1,0 +1,45 @@
+.support-intro { padding-block: 2.8rem 1.4rem; display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: .8rem; }
+.support-intro p:not(.eyebrow), .intro p:not(.eyebrow) { color: var(--muted); }
+.support-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1rem; }
+#technician .support-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); }
+#pair-form { padding-bottom: .5rem; }
+.inline { display: flex; gap: .5rem; align-items: end; }
+.inline label { margin: 0; flex: 1; }
+.inline button { flex-shrink: 0; }
+.check { display: flex; gap: .55rem; align-items: baseline; }
+.panel-heading { display: flex; align-items: start; justify-content: space-between; gap: .6rem; flex-wrap: wrap; }
+.panel-heading h2 { margin: .3rem 0 .75rem; }
+.conversation { min-height: 13rem; max-height: 22rem; overflow: auto; list-style: none; padding: .5rem; border: 1px solid var(--stroke); border-radius: .45rem; }
+.conversation li { width: fit-content; max-width: 92%; padding: .45rem .7rem; margin: .3rem 0; border-radius: .55rem; background: var(--raised); overflow-wrap: anywhere; white-space: pre-wrap; }
+.conversation li strong { display: block; color: var(--accent); font-size: .75rem; }
+.conversation li code { user-select: all; }
+.conversation li[data-own=true] { margin-inline-start: auto; }
+.auth { max-width: 32rem; }
+.lobby { list-style: none; padding: 0; max-height: 21rem; overflow: auto; }
+.lobby button { width: 100%; justify-content: space-between; gap: .5rem; margin-bottom: .45rem; text-align: left; }
+.lobby button[aria-pressed=true] { border-color: var(--accent); }
+.toolbox { margin-top: 1rem; }
+.metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .65rem; margin-block: .75rem; }
+.metrics div { background: var(--bg); padding: .65rem; border-radius: .45rem; border: 1px solid var(--stroke); }
+.metrics strong { display: block; font-size: clamp(1rem, 3vw, 1.5rem); }
+.lab-layout { display: grid; grid-template-columns: minmax(0, 13rem) minmax(0, 1fr); gap: 1rem; margin-top: 1rem; }
+.lab-layout aside nav { display: grid; gap: .45rem; }
+.lab-layout aside nav button { justify-content: start; gap: .65rem; }
+.lab-layout aside nav .active { border-color: var(--accent); color: var(--accent); }
+.lab-layout aside button { width: 100%; }
+.lab-layout .intro, .modalhead { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: space-between; align-items: start; margin-bottom: .8rem; }
+.lab-layout .cards, .lab-layout .grid, .lab-layout .compare, .lab-layout .summary {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,14rem),1fr)); gap: .6rem;
+}
+.lab-layout .tablewrap { overflow-x: auto; }
+.lab-layout table { width: 100%; border-collapse: collapse; }
+.lab-layout td, .lab-layout th { text-align: left; border-bottom: 1px solid var(--stroke); padding: .5rem; }
+.lab-layout .toolbar, .lab-layout .filters, .lab-layout .tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-block: .6rem; }
+.lab-layout .toolbar > *, .lab-layout .filters > * { flex: 1 1 8rem; }
+#toast { display: none; position: fixed; z-index: 2; bottom: 1rem; right: 1rem; }
+@media (max-width: 47rem) {
+  .support-layout, #technician .support-layout, .lab-layout { grid-template-columns: minmax(0,1fr); }
+  .lab-layout aside nav { display: flex; flex-wrap: wrap; }
+  .lab-layout aside nav button { width: auto; }
+  .support-intro { padding-top: 1.5rem; }
+}

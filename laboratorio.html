@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Laboratorio de IA · CompressOS</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./factory.css">
+  <script defer src="./lab.js"></script>
+  <script type="module" src="./usuario.js"></script>
+</head>
+<body class="lab">
+  <a class="skip" href="#app">Saltar al contenido</a>
+  <header class="topbar">
+    <div class="shell bar-inner">
+      <a class="wordmark" href="./"><span aria-hidden="true">◈</span><strong>CompressOS</strong> <small>Agent Factory</small></a>
+      <nav aria-label="Navegación principal"><a href="./">Portal</a><a href="./mensajes.html">Mensajes</a><a aria-current="page" href="./laboratorio.html">Laboratorio</a><a href="./?rol=tecnico">Modo Técnico</a></nav>
+    </div>
+  </header>
+  <div class="shell lab-layout">
+    <aside class="panel">
+      <h2>Laboratorio de IA</h2>
+      <nav id="nav" aria-label="Secciones del Laboratorio"></nav>
+      <p class="muted">Los registros se guardan en este navegador.</p>
+      <div class="actions"><button id="export">Exportar bitácora</button><button id="import">Importar JSON</button>
+      <input id="importfile" type="file" accept="application/json" hidden></div>
+      <output id="lab-link" class="pill">Estado de soporte no disponible</output>
+    </aside>
+    <main id="app" tabindex="-1"></main>
+  </div>
+  <footer class="shell footer">CompressOS <span>Presets y bitácora de IA local</span></footer>
+  <dialog id="modal" aria-labelledby="modaltitle"><form id="form">
+    <div class="modalhead"><h2 id="modaltitle">Registrar prueba</h2><button type="button" id="close">Cerrar</button></div>
+    <div id="fields"></div><p class="muted">Documenta la evidencia antes de marcar una prueba como validada.</p>
+    <button class="primary" type="submit">Guardar registro</button>
+  </form></dialog>
+  <div id="toast" class="panel" role="status"></div>
+</body>
+</html>

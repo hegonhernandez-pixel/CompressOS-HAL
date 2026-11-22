@@ -1,0 +1,17 @@
+#!/bin/sh
+# Install root-owned at /usr/local/sbin/compresso-factory-services.
+# Fixed operations: no remote unit, path, argument, profile or shell is accepted.
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+[ "$(id -u)" -eq 0 ] || exit 77
+[ "$#" -eq 1 ] || exit 64
+case "$1" in
+  start)
+    /usr/bin/systemctl start compresso-metricsd.service compresso-supervisord.service
+    ;;
+  stop)
+    /usr/bin/systemctl stop compresso-metricsd.service compresso-supervisord.service
+    ;;
+  *) exit 64 ;;
+esac
