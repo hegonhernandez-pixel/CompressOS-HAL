@@ -2,26 +2,76 @@
 
 Portal de soporte Linux, consola del técnico, mensajería y Laboratorio. El portal usa Supabase Auth y Postgres Changes. El agente usa HTTPS saliente para reclamar diagnósticos de una lista fija. El único servidor HTTP del agente escucha en 127.0.0.1. El estado «Túnel activo» representa un canal de soporte limitado a estas operaciones.
 
-## Configurar el proyecto nuevo
+## Activación manual en Supabase
 
-1. Crea `compressos-agent-factory` en la organización `mozaxdepxhzkloylkbun`. Ejecuta `supabase_schema.sql` una vez con el editor SQL.
-2. Habilita los inicios de sesión anónimos en Auth. Para una publicación abierta, configura los límites de Auth y la retención de cuentas de visitantes. Si habilitas CAPTCHA para Auth, integra su interfaz antes de habilitar el portal público.
-3. Crea la cuenta del técnico en Auth. Usa su UUID de Auth en el editor SQL.
+Configura un proyecto nuevo llamado `compressos-agent-factory` dentro de la organización `mozaxdepxhzkloylkbun`. Usa una cuenta de la organización con permiso para crear proyectos y administrar Auth y la base de datos. En **New project**, elige la región y el plan de la organización. Guarda la contraseña de la base de datos en tu gestor de contraseñas. El portal requiere la URL del proyecto y su clave pública.
 
-   ```sql
-   insert into factory_private.technicians(user_id) values ('UUID_DEL_TÉCNICO');
+| Pestaña | Acción |
+| --- | --- |
+| **SQL Editor → New query** | Abre `supabase_schema.sql`, copia el archivo completo y pulsa **Run** una vez en el proyecto nuevo. Crea tablas, funciones, políticas RLS y la publicación de los cambios. |
+| **Authentication → Sign In / Providers** | Activa **Allow new users to sign up** y **Allow anonymous sign-ins**. Conserva habilitado **Email** para el acceso del técnico con correo y contraseña. Los visitantes reciben una identidad anónima de Supabase. |
+| **Authentication → Users → Add user → Create new user** | Crea la cuenta del técnico con correo y contraseña. Completa la confirmación del correo o usa **Auto Confirm User** si controlas esa dirección. Copia el **User UID**. |
+| **SQL Editor → New query** | Autoriza el UID del técnico con la consulta de abajo. La pertenencia a la lista se valida en la base de datos. |
+| **Database → Publications → supabase_realtime** | Comprueba que estén incluidas las cinco tablas de Factory. El esquema ya las incorpora. |
+| **Connect** o **Settings → API Keys** | Copia el **Project URL** y la **Publishable key** (`sb_publishable_…`). La antigua clave `anon` también es compatible. Mantén la contraseña de base de datos y las claves `secret` y `service_role` fuera de `config.js` y de GitHub. |
+
+En la consulta de alta, sustituye `UUID_DEL_TÉCNICO` por el UID de **Authentication → Users**. Esta autorización permite a esa cuenta ver la sala de espera, los mensajes de soporte y los datos de las sesiones que habiliten diagnóstico.
+
+```sql
+insert into factory_private.technicians (user_id)
+values ('UUID_DEL_TÉCNICO'::uuid)
+on conflict (user_id) do nothing;
+```
+
+Para comprobar el esquema desde **SQL Editor**, esta consulta devuelve cinco filas con `rls = true` y `realtime = true`.
+
+```sql
+select t.relname as tabla, t.relrowsecurity as rls,
+       exists (
+         select 1
+         from pg_publication_tables p
+         where p.pubname = 'supabase_realtime'
+           and p.schemaname = 'public' and p.tablename = t.relname
+       ) as realtime
+from pg_class t join pg_namespace s on s.oid = t.relnamespace
+where s.nspname = 'public'
+  and t.relname in ('factory_lobby', 'factory_messages', 'factory_agents',
+                    'factory_actions', 'factory_audit')
+order by 1;
+```
+
+Para la prueba privada, la versión actual de Factory usa el flujo anónimo sin formulario CAPTCHA. Conserva los límites de **Authentication → Rate Limits**. Para publicar el portal abierto, integra la protección CAPTCHA en el flujo de inicio anónimo antes de habilitarla y define la retención de cuentas de visitantes.
+
+Referencias de Supabase. [Inicio anónimo](https://supabase.com/docs/guides/auth/auth-anonymous) · [Claves de API](https://supabase.com/docs/guides/api/api-keys) · [Postgres Changes](https://supabase.com/docs/guides/realtime/postgres-changes)
+
+## Conectar el portal
+
+En la rama `factory-compressos`, sustituye las dos cadenas vacías en `config.js` con los valores del proyecto. Conserva los demás valores del archivo.
+
+```js
+export const SUPABASE_URL = 'https://REFERENCIA_DEL_PROYECTO.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_CLAVE_PUBLICA';
+```
+
+- **ChatGPT Site**. Publica nuevamente `/soporte/` con ese `config.js`. Comprueba que el portal ya pueda registrar a un visitante y que el técnico lo vea.
+- **GitHub Pages**. Con acceso a **Settings → Pages**, selecciona **Deploy from a branch**, rama `factory-compressos`, carpeta **/ (root)** y guarda. El repositorio privado requiere un plan compatible con Pages. Comprueba el resultado en **Settings → Pages**.
+- **Prueba local**. Desde el directorio con los archivos configurados, ejecuta `python3 -m http.server 8000 --bind 127.0.0.1` y abre `http://127.0.0.1:8000/`. Añade `--origin http://127.0.0.1:8000` al comando del agente. Cada computadora que use este modo debe servir su propia copia con las mismas claves públicas de proyecto.
+
+## Activación en Linux y prueba con dos computadoras
+
+1. En el equipo que recibirá soporte, abre el portal configurado, descarga `agent.py` y abre una terminal en la carpeta de descarga. Comprueba `python3 --version` (3.8 o superior).
+2. Arranca el agente como tu usuario Linux. Para la primera prueba, habilita diagnóstico y deja desactivado el permiso para iniciar o detener servicios. El puente escucha en `127.0.0.1:7890` de la misma computadora.
+
+   ```sh
+   FACTORY_ALLOW_REMOTE_DIAGNOSTICS=1 FACTORY_ALLOW_SERVICE_CONTROL=0 \
+     python3 agent.py --supabase-url 'https://REFERENCIA_DEL_PROYECTO.supabase.co' \
+     --anon-key 'sb_publishable_CLAVE_PUBLICA'
    ```
 
-4. Añade la URL HTTPS y la clave **publishable** o JWT **anon** del proyecto a `config.js`. La política RLS y la lista de técnicos se aplican en la base de datos. Mantén las claves privadas fuera de los archivos estáticos.
-5. Sirve la raíz de `factory-compressos` con Pages. El Site existente ofrece la misma compilación en `/soporte/`, preservando las herramientas y la mensajería interna de Factory y Arcade en sus rutas originales.
-
-## Probar en dos computadoras
-
-1. Abre el portal en la computadora del usuario. Descarga `agent.py` y ejecuta el comando de la página como tu usuario Linux. Para una prueba local, sirve los estáticos con `python3 -m http.server 8000 --bind 127.0.0.1` y añade `--origin http://127.0.0.1:8000` al agente.
-2. En otra computadora, abre `?rol=tecnico` e inicia sesión con la cuenta autorizada. Selecciona al visitante y envía el token.
-3. En el equipo del usuario, copia el token del chat y el código de la terminal en sus campos respectivos, marca los permisos elegidos y solicita el enlace. Autoriza acceso a la red local si el navegador lo pide.
-4. Pulsa **Activar** como técnico. Con permiso de diagnóstico, ejecuta `uptime` y revisa el resultado y la auditoría. Prueba Pausar, Detener y la revocación desde el portal. Tras cerrar el agente, comprueba que desapareció el archivo de credenciales y que una sesión ajena no puede leer el chat.
-5. Los diagnósticos y la telemetría se limitan a la sesión vigente. El token de enlace vence a los cinco minutos y la sesión del agente tiene una duración máxima de una hora. Tras un reinicio del agente, solicita un token nuevo.
+3. En la computadora del técnico, abre el portal con `?rol=tecnico`. Inicia sesión, selecciona al visitante y pulsa **Generar y enviar token**.
+4. En la computadora Linux, pega el token del chat en **Token del técnico** y el código que imprimió el agente en **Código local de la terminal**. Marca **Compartir diagnósticos y telemetría**, pulsa **Solicitar enlace** y permite el acceso a la red local si el navegador lo solicita.
+5. Desde la vista del técnico, pulsa **Activar**, ejecuta el diagnóstico `uptime` y confirma que llega el resultado. Finaliza con **Desconectar** en el portal del usuario o `Ctrl+C` en la terminal del agente.
+6. El token vence a los cinco minutos y la sesión del agente tiene una duración máxima de una hora. Después de reiniciar el agente, solicita un token nuevo.
 
 ## Servicio local opcional
 
