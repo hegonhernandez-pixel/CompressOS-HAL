@@ -2,6 +2,18 @@
 
 Portal de soporte Linux, consola del técnico, mensajería y Laboratorio. El portal usa Supabase Auth y Postgres Changes. El agente usa HTTPS saliente para reclamar diagnósticos de una lista fija. El único servidor HTTP del agente escucha en 127.0.0.1. El estado «Túnel activo» representa un canal de soporte limitado a estas operaciones.
 
+## Entradas y publicación en GitHub Pages
+
+La entrada del cliente es la raíz del portal. Ahí están el chat y la preparación del equipo. La entrada del técnico añade `?rol=tecnico` y exige una cuenta autorizada. `laboratorio.html` abre los presets y la bitácora local del navegador. La ruta anterior `mensajes.html` lleva al chat de soporte. La sala interna de Factory y Arcade se administra en sus ChatGPT Sites privados.
+
+1. En GitHub, abre **Settings → Pages → Build and deployment** con una cuenta administradora.
+2. Selecciona **Deploy from a branch**, la rama **factory-compressos** y **/ (root)**. La rama tiene `index.html` en su raíz. Guarda y revisa la ejecución de Pages en **Actions**.
+3. Cuando GitHub indique que el despliegue terminó, usa la URL que muestra **Visit site**. La URL esperada es `https://hegonhernandez-pixel.github.io/CompressOS-HAL/`. La vista del técnico agrega `?rol=tecnico`.
+4. Si el repositorio privado no ofrece Pages o la visibilidad pública, comprueba el plan y las políticas de la cuenta. Conserva la visibilidad del repositorio. Para un despliegue público alternativo, publica únicamente los archivos del portal autorizados para distribución.
+5. Opcionalmente, agrega la URL verificada como **Website** en **About** del repositorio. Ese enlace es independiente de la activación de Pages.
+
+Antes de aceptar la prueba desde dos equipos, confirma que el visitante puede enviar un mensaje, que el técnico lo recibe desde el celular y que el visitante recibe su respuesta. Para habilitar el enlace con el agente desde Pages, usa el origen exacto del portal con `--origin https://hegonhernandez-pixel.github.io`. Para la primera prueba basta el permiso de diagnóstico.
+
 ## Activación manual en Supabase
 
 Configura un proyecto nuevo llamado `compressos-agent-factory` dentro de la organización `mozaxdepxhzkloylkbun`. Usa una cuenta de la organización con permiso para crear proyectos y administrar Auth y la base de datos. En **New project**, elige la región y el plan de la organización. Guarda la contraseña de la base de datos en tu gestor de contraseñas. El portal requiere la URL del proyecto y su clave pública.
