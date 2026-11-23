@@ -208,7 +208,7 @@ async function main() {
     if (byId('disconnect')) byId('disconnect').disabled = true;
     return;
   }
-  if (quick) quick.textContent = 'FACTORY_ALLOW_SERVICE_CONTROL=1 FACTORY_ALLOW_REMOTE_DIAGNOSTICS=1 \\\npython3 agent.py --supabase-url ' + SUPABASE_URL + ' --anon-key ' + SUPABASE_ANON_KEY;
+  if (quick) quick.textContent = 'FACTORY_ALLOW_SERVICE_CONTROL=0 FACTORY_ALLOW_REMOTE_DIAGNOSTICS=1 \\\npython3 agent.py --supabase-url ' + SUPABASE_URL + ' --anon-key ' + SUPABASE_ANON_KEY;
   await import('./supabase-client.js');
   const client = globalThis.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { storageKey: technician ? 'compressos-factory-tech' : 'compressos-factory-visitor', detectSessionInUrl:false }
@@ -219,7 +219,16 @@ async function main() {
     return;
   }
   let session = unwrap(await client.auth.getSession()).session;
-  if (!session) session = unwrap(await client.auth.signInAnonymously()).session;
+  if (!session) {
+    const result = await client.auth.signInAnonymously();
+    if (result.error?.code === 'anonymous_provider_disabled') {
+      status.textContent = 'Chat de visitantes deshabilitado';
+      note('El chat de soporte todavía no admite visitantes. El acceso técnico y el Laboratorio siguen disponibles en el menú.');
+      for (const field of byId('visitor')?.querySelectorAll('button, input') ?? []) field.disabled = true;
+      return;
+    }
+    session = unwrap(result).session;
+  }
   if (!session?.user?.is_anonymous) throw new Error('No fue posible iniciar una sesión de visitante.');
   initializeVisitor(client, session.user.id);
 }
