@@ -12,7 +12,9 @@ La entrada del cliente es la raíz del portal. Ahí están el chat y la preparac
 4. Si el repositorio privado no ofrece Pages o la visibilidad pública, comprueba el plan y las políticas de la cuenta. Conserva la visibilidad del repositorio. Para un despliegue público alternativo, publica únicamente los archivos del portal autorizados para distribución.
 5. Opcionalmente, agrega la URL verificada como **Website** en **About** del repositorio. Ese enlace es independiente de la activación de Pages.
 
-Antes de aceptar la prueba desde dos equipos, confirma que el visitante puede enviar un mensaje, que el técnico lo recibe desde el celular y que el visitante recibe su respuesta. Para habilitar el enlace con el agente desde Pages, usa el origen exacto del portal con `--origin https://hegonhernandez-pixel.github.io`. Para la primera prueba basta el permiso de diagnóstico.
+Antes de aceptar la prueba desde dos equipos, confirma que el visitante puede enviar un mensaje, que el técnico lo recibe desde el celular y que el visitante recibe su respuesta. El agente ya incluye el origen HTTPS de Pages. `--origin` se usa únicamente para desarrollo en localhost. Para la primera prueba basta el permiso de diagnóstico.
+
+El historial de la rama está en [CHANGELOG-factory.md](./CHANGELOG-factory.md).
 
 ## Activación manual en Supabase
 
