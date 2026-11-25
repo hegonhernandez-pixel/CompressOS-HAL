@@ -1,4 +1,4 @@
-import {ACTIONS, LEGACY_TEAM} from './config.js';
+import {ACTIONS, LEGACY_TEAM, SUPABASE_URL, SUPABASE_ANON_KEY} from './config.js';
 import {byId, labels, element, note, unwrap, safe, messages, live} from './usuario.js';
 
 const catalog = {
@@ -172,11 +172,32 @@ export async function initializeTechnician(client) {
     note('');
     panel(client);
   }
-  if (unwrap(await client.auth.getSession()).session && await authorized()) {
-    open();
-    return;
+  const {session} = unwrap(await client.auth.getSession());
+  if (session) {
+    if (await authorized()) {
+      open();
+      return;
+    }
+    unwrap(await client.auth.signOut({scope:'local'}));
+    note('La sesión anterior no tiene permiso técnico. Entra con la cuenta autorizada.');
   }
   status.textContent = 'Acceso protegido';
+  byId('login-google').onclick = safe(async () => {
+    const settings = await fetch(SUPABASE_URL + '/auth/v1/settings', {headers:{apikey:SUPABASE_ANON_KEY}});
+    if (!settings.ok) throw new Error('No se pudo comprobar Google. Usa correo y contraseña.');
+    if (!(await settings.json()).external?.google) throw new Error('Google aún no está habilitado. Usa correo y contraseña.');
+    const redirectTo = new URL('./?rol=tecnico', location.href).href;
+    const result = await client.auth.signInWithOAuth({
+      provider:'google', options:{redirectTo, skipBrowserRedirect:true}
+    });
+    const {url} = unwrap(result);
+    if (!url) throw new Error('Google no devolvió una URL de acceso. Usa correo y contraseña.');
+    const destination = new URL(url);
+    if (destination.origin !== new URL(SUPABASE_URL).origin) {
+      throw new Error('Supabase devolvió una URL de acceso inesperada.');
+    }
+    location.assign(destination);
+  });
   byId('login').onsubmit = safe(async event => {
     const form = event.currentTarget;
     try {
