@@ -189,6 +189,18 @@ function initializeVisitor(client, id) {
   });
 }
 
+function captureTechnicianLink() {
+  const url = new URL(location.href);
+  const hash = new URLSearchParams(url.hash.slice(1));
+  const type = url.searchParams.get('type');
+  const token = url.searchParams.get('token_hash');
+  const error = url.searchParams.get('error_code') || hash.get('error_code');
+  if (!token && !error) return null;
+  const clean = new URL('./?rol=tecnico', url);
+  history.replaceState(history.state, '', clean);
+  return {type, token, error};
+}
+
 async function main() {
   const technician = Boolean(byId('technician')) && new URLSearchParams(location.search).get('rol') === 'tecnico';
   const status = byId('connection') || byId('lab-link');
@@ -209,13 +221,14 @@ async function main() {
     return;
   }
   if (quick) quick.textContent = 'FACTORY_ALLOW_SERVICE_CONTROL=0 FACTORY_ALLOW_REMOTE_DIAGNOSTICS=1 \\\npython3 agent.py --supabase-url ' + SUPABASE_URL + ' --anon-key ' + SUPABASE_ANON_KEY;
+  const emailLink = technician ? captureTechnicianLink() : null;
   await import('./supabase-client.js');
   const client = globalThis.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { storageKey: technician ? 'compressos-factory-tech' : 'compressos-factory-visitor', detectSessionInUrl:technician, ...(technician ? {flowType:'pkce'} : {}) }
   });
   if (technician) {
     const {initializeTechnician} = await import('./factory.js');
-    await initializeTechnician(client);
+    await initializeTechnician(client,emailLink);
     return;
   }
   let session = unwrap(await client.auth.getSession()).session;
