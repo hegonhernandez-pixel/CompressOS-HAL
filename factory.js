@@ -161,7 +161,16 @@ function panel(client) {
   const refresh = live(client,[['factory_messages'],['factory_agents'],['factory_actions'],['factory_audit']],update);
 }
 
-export async function initializeTechnician(client) {
+const TECHNICIAN_URL = 'https://hegonhernandez-pixel.github.io/CompressOS-HAL/?rol=tecnico';
+
+function authResult(result) {
+  if (result.error && /captcha/i.test(result.error.code || result.error.message || '')) {
+    throw new Error('Supabase exige CAPTCHA. El administrador debe configurar el proveedor y el formulario, o corregir esa opción en Supabase.');
+  }
+  return unwrap(result);
+}
+
+export async function initializeTechnician(client, emailLink) {
   const login = byId('technician-login');
   const status = byId('connection');
   const authorized = async () => unwrap(await client.rpc('factory_is_tech'));
@@ -172,8 +181,61 @@ export async function initializeTechnician(client) {
     note('');
     panel(client);
   }
+  const passwordLogin = byId('login');
+  const google = byId('login-google');
+  const resetRequest = byId('reset-request');
+  const verifyLink = byId('verify-email-link');
+  const newPassword = byId('new-password');
+  status.textContent = 'Acceso protegido';
+
+  byId('reset-email').onsubmit = safe(async event => {
+    const email = event.currentTarget.elements.email.value.trim();
+    authResult(await client.auth.resetPasswordForEmail(email,{redirectTo:TECHNICIAN_URL}));
+    note('Si el correo corresponde a una cuenta, recibirás un enlace nuevo. Usa el mensaje más reciente.');
+  });
+
+  if (emailLink?.error) note('El enlace del correo venció o ya se usó. Solicita uno nuevo si necesitas cambiar tu contraseña.');
+  if (emailLink?.token && ['recovery','signup','email'].includes(emailLink.type)) {
+    passwordLogin.hidden = google.hidden = resetRequest.hidden = true;
+    verifyLink.hidden = false;
+    verifyLink.onsubmit = safe(async () => {
+      let verified;
+      try {
+        verified = authResult(await client.auth.verifyOtp({type:emailLink.type,token_hash:emailLink.token}));
+      } catch (error) {
+        verifyLink.hidden = true;
+        passwordLogin.hidden = google.hidden = resetRequest.hidden = false;
+        throw error;
+      }
+      if (!verified.session || !await authorized()) {
+        await client.auth.signOut({scope:'local'});
+        location.replace(TECHNICIAN_URL);
+        return;
+      }
+      verifyLink.hidden = true;
+      if (emailLink.type !== 'recovery') {
+        open();
+        return;
+      }
+      newPassword.hidden = false;
+      status.textContent = 'Crea una contraseña nueva';
+      newPassword.elements.password.focus();
+    });
+    newPassword.onsubmit = safe(async event => {
+      const form = event.currentTarget;
+      if (form.elements.password.value !== form.elements.confirm.value) throw new Error('Las contraseñas deben coincidir.');
+      authResult(await client.auth.updateUser({password:form.elements.password.value}));
+      form.reset();
+      unwrap(await client.auth.signOut({scope:'local'}));
+      newPassword.hidden = true;
+      passwordLogin.hidden = google.hidden = resetRequest.hidden = false;
+      status.textContent = 'Acceso protegido';
+      note('Contraseña actualizada. Entra con tu correo y la nueva contraseña.');
+    });
+  }
+
   const {session} = unwrap(await client.auth.getSession());
-  if (session) {
+  if (session && !emailLink?.token && !emailLink?.error) {
     if (await authorized()) {
       open();
       return;
@@ -181,8 +243,7 @@ export async function initializeTechnician(client) {
     unwrap(await client.auth.signOut({scope:'local'}));
     note('La sesión anterior no tiene permiso técnico. Entra con la cuenta autorizada.');
   }
-  status.textContent = 'Acceso protegido';
-  byId('login-google').onclick = safe(async () => {
+  google.onclick = safe(async () => {
     const settings = await fetch(SUPABASE_URL + '/auth/v1/settings', {headers:{apikey:SUPABASE_ANON_KEY}});
     if (!settings.ok) throw new Error('No se pudo comprobar Google. Usa correo y contraseña.');
     if (!(await settings.json()).external?.google) throw new Error('Google aún no está habilitado. Usa correo y contraseña.');
@@ -198,10 +259,10 @@ export async function initializeTechnician(client) {
     }
     location.assign(destination);
   });
-  byId('login').onsubmit = safe(async event => {
+  passwordLogin.onsubmit = safe(async event => {
     const form = event.currentTarget;
     try {
-      unwrap(await client.auth.signInWithPassword({email:form.elements.email.value,password:form.elements.password.value}));
+      authResult(await client.auth.signInWithPassword({email:form.elements.email.value,password:form.elements.password.value}));
       if (!await authorized()) {
         await client.auth.signOut();
         throw new Error('La cuenta no está autorizada como técnico.');
