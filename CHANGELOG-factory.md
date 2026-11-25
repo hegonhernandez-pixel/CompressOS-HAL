@@ -1,5 +1,11 @@
 # Historial de CompressOS Agent Factory
 
+## 2026-11-25
+
+- Añadido acceso técnico con Google condicionado a la configuración del proveedor en Supabase.
+- Documentadas el alta y la revocación desde SQL Editor y la conexión inicial de una computadora.
+- Las tablas privadas de técnicos y credenciales quedan fuera de Realtime. El portal conserva las cinco tablas operativas.
+
 ## 2026-11-23
 
 - GitHub Pages publica el portal público desde `factory-compressos`, en la raíz. [Portal](https://hegonhernandez-pixel.github.io/CompressOS-HAL/) · [Acceso técnico](https://hegonhernandez-pixel.github.io/CompressOS-HAL/?rol=tecnico)
