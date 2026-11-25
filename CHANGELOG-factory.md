@@ -2,6 +2,9 @@
 
 ## 2026-11-25
 
+- Añadidos solicitud de recuperación, verificación de enlace y formulario para crear una contraseña técnica nueva.
+- Documentadas las URL de Auth, las plantillas de correo y el diagnóstico de CAPTCHA.
+
 - Añadido acceso técnico con Google condicionado a la configuración del proveedor en Supabase.
 - Documentadas el alta y la revocación desde SQL Editor y la conexión inicial de una computadora.
 - Las tablas privadas de técnicos y credenciales quedan fuera de Realtime. El portal conserva las cinco tablas operativas.
