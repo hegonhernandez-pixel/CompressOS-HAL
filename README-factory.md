@@ -14,7 +14,7 @@ La entrada del cliente es la raíz del portal. Ahí están el chat y la preparac
 
 Antes de aceptar la prueba desde dos equipos, confirma que el visitante puede enviar un mensaje, que el técnico lo recibe desde el celular y que el visitante recibe su respuesta. El agente ya incluye el origen HTTPS de Pages. `--origin` se usa únicamente para desarrollo en localhost. Para la primera prueba basta el permiso de diagnóstico.
 
-El historial de la rama está en [CHANGELOG-factory.md](./CHANGELOG-factory.md).
+El historial de la rama está en [CHANGELOG-factory.md](./CHANGELOG-factory.md). Consulta también la [guía breve de acceso y conexión](./docs/FACTORY-ACCESO-TECNICO.md).
 
 ## Activación manual en Supabase
 
