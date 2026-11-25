@@ -87,6 +87,20 @@ Do not repeat the already completed security-test campaign unless a new change c
 - No command has been run on the user's target PC. No physical GPU execution, real shader benchmark, Mint ISO build or boot validation is claimed.
 - Knowledge delta: `modules/memory/src/compresso/hardware.py`, `modules/memory/tests/test_hardware.py`, `modules/memory/scripts/compressoctl`, `modules/memory/scripts/install-mint.sh`, `modules/memory/README.md`, and this status record.
 
+
+## Execution record — 2026-11-13 (front A)
+
+- Reviewed the recovery-branch read-only Supervisor and focused regression tests. Confirmed diagnostics for missing/inactive configured ZRAM, unexpected/multiple ZRAM swaps, compressor mismatch or unknown selection, missing memory telemetry, and Zswap enabled/disabled/unknown across `zram-fast`, `zswap-first`, and `hybrid-exp`.
+- No distinct new functional gap was established in this inspection; did not duplicate implemented capabilities or alter kernel/swap behavior. No new tests were executed in this run; existing regression coverage was inspected only.
+- Rechecked historical [recovery CI run 43259630148](https://github.com/hegonhernandez-pixel/CompressOS-HAL/actions/runs/43259630148): `memory-subsystem` completed successfully, including Unit tests, Compile Python, and Shell syntax. This historical result is not evidence that the documentation commit below passed CI.
+- PR #2 was already merged and cannot be updated; no change to `main`. The next alternating front is B (`compressoctl`). Physical Mint/ZRAM/Zswap, ISO, and QEMU validation are not claimed.
+
+## Execution record — 2026-11-20 (front B)
+
+- Inspected `compressoctl`, `profilectl.py`, the existing status record and the merged PR #2 before considering changes.
+- Confirmed read-only `status`/`doctor`/`metrics`/`hardware` and explicit `profile list|show|set`; profile changes validate configuration, preserve metadata, use atomic replacement and do not activate swap, modify kernel parameters or restart services. No new functional gap was demonstrated, so no redundant code or tests were added.
+- PR #2 is closed and merged (merge commit `a52a40f`); it cannot be updated as an open PR. The branch remains accessible. The historical PR-head workflow run 42734077409 succeeded in `memory-subsystem` (Unit tests, Compile Python, Shell syntax); this is not a new validation of today's documentation change.
+- No local test suite or physical-host command was executed in this run. Mint boot, real ZRAM/Zswap activation, ISO build and QEMU boot remain unverified. Next alternating front: A (memory supervisor).
 ## Execution record — 2026-11-16 (modular AI Stack)
 
 - Branch: `feature/modular-installer-lemonade`.
