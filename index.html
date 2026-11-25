@@ -62,6 +62,23 @@
         <button class="primary">Entrar</button>
       </form>
       <button type="button" id="login-google">Continuar con Google</button>
+      <details id="reset-request">
+        <summary>Solicitar nueva contraseña</summary>
+        <form id="reset-email">
+          <label>Correo de la cuenta técnica <input name="email" type="email" autocomplete="email" required></label>
+          <button>Enviar enlace de recuperación</button>
+        </form>
+      </details>
+      <form id="verify-email-link" hidden>
+        <p>Este enlace de correo se verifica una sola vez.</p>
+        <button class="primary">Verificar enlace</button>
+        <a href="./?rol=tecnico">Volver al acceso técnico</a>
+      </form>
+      <form id="new-password" hidden>
+        <label>Nueva contraseña <input name="password" type="password" autocomplete="new-password" minlength="12" required></label>
+        <label>Repite la contraseña <input name="confirm" type="password" autocomplete="new-password" minlength="12" required></label>
+        <button class="primary">Guardar nueva contraseña</button>
+      </form>
     </section>
     <section id="technician" hidden>
       <div class="support-layout">
