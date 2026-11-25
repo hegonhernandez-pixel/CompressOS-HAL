@@ -101,3 +101,15 @@ Do not repeat the already completed security-test campaign unless a new change c
 - Confirmed read-only `status`/`doctor`/`metrics`/`hardware` and explicit `profile list|show|set`; profile changes validate configuration, preserve metadata, use atomic replacement and do not activate swap, modify kernel parameters or restart services. No new functional gap was demonstrated, so no redundant code or tests were added.
 - PR #2 is closed and merged (merge commit `a52a40f`); it cannot be updated as an open PR. The branch remains accessible. The historical PR-head workflow run 42734077409 succeeded in `memory-subsystem` (Unit tests, Compile Python, Shell syntax); this is not a new validation of today's documentation change.
 - No local test suite or physical-host command was executed in this run. Mint boot, real ZRAM/Zswap activation, ISO build and QEMU boot remain unverified. Next alternating front: A (memory supervisor).
+## Execution record — 2026-11-16 (modular AI Stack)
+
+- Branch: `feature/modular-installer-lemonade`.
+- Commit: `93ed930`.
+- Added independent HAL, Lemonade and zVGA installation selection.
+- Added combined `--install-ai-stack` selection.
+- Four mocked installation simulations passed.
+- Functional test scripts passed before commit.
+- No real installation or performance validation is claimed.
+- Memory services remain disabled unless explicitly requested.
+- Pending: profile-specific tests, clean Mint installation,
+  rollback validation and commercial deployment readiness.

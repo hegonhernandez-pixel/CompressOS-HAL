@@ -106,3 +106,13 @@ Licensing and commercial distribution terms are under evaluation. No license is 
 ## Project philosophy
 
 **Research first. Validate before claiming. Document failures. Preserve reproducibility. Build modularly.**
+
+## Modular AI Stack provisioning
+
+The experimental Linux installer supports independent installation of
+HAL, Lemonade AI Server and zVGA, or their combined AI Stack configuration.
+
+See [Linux provisioning guide](provisioning/linux/README.md).
+
+Installer orchestration was validated through four mocked simulations
+on 2026-11-16. Clean-system installation remains unverified.
