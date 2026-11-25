@@ -211,7 +211,7 @@ async function main() {
   if (quick) quick.textContent = 'FACTORY_ALLOW_SERVICE_CONTROL=0 FACTORY_ALLOW_REMOTE_DIAGNOSTICS=1 \\\npython3 agent.py --supabase-url ' + SUPABASE_URL + ' --anon-key ' + SUPABASE_ANON_KEY;
   await import('./supabase-client.js');
   const client = globalThis.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { storageKey: technician ? 'compressos-factory-tech' : 'compressos-factory-visitor', detectSessionInUrl:false }
+    auth: { storageKey: technician ? 'compressos-factory-tech' : 'compressos-factory-visitor', detectSessionInUrl:technician, ...(technician ? {flowType:'pkce'} : {}) }
   });
   if (technician) {
     const {initializeTechnician} = await import('./factory.js');
