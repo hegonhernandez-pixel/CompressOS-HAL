@@ -36,3 +36,18 @@ La revocación bloquea nuevas acciones técnicas en la base. Para cerrar una ses
 2. **Técnico, en el celular:** entra a Acceso técnico, selecciona al visitante, responde y pulsa **Generar y enviar token**.
 3. **Cliente:** copia el token del chat y el código local de la terminal al formulario del portal. Marca **Compartir diagnósticos y telemetría**, pulsa **Solicitar enlace** y autoriza el acceso local si el navegador lo solicita.
 4. **Técnico:** pulsa **Activar** y verifica un diagnóstico de lectura. Para terminar, el cliente pulsa **Desconectar**.
+
+## Recuperar la contraseña del técnico
+
+1. Abre **Supabase → Authentication → URL Configuration**. Pon `https://hegonhernandez-pixel.github.io/CompressOS-HAL/` como **Site URL**. Añade `https://hegonhernandez-pixel.github.io/CompressOS-HAL/?rol=tecnico` a **Redirect URLs**. Conserva las entradas válidas de otros entornos.
+2. En **Authentication → Email Templates → Reset password**, usa este destino para el enlace del correo:
+
+   ```html
+   <a href="{{ .SiteURL }}?rol=tecnico&amp;type=recovery&amp;token_hash={{ .TokenHash }}">Crear una contraseña nueva</a>
+   ```
+
+   Para **Confirm signup** usa la misma URL con `type=email`. Si la plantilla anterior tenía `localhost` escrito literalmente, quítalo también. Los correos anteriores pueden haber vencido o haberse usado.
+3. Si Supabase responde `no captcha_token found`, revisa **Authentication → Attack Protection → CAPTCHA**. El formulario actual no tiene un widget configurado. Con CAPTCHA habilitado, el administrador debe configurar un proveedor y su widget antes de admitir estos formularios. Si se desactiva esa protección para una prueba controlada, conserva los límites de solicitudes y revisa el impacto sobre el ingreso anónimo público.
+4. Desde **Acceso técnico**, abre **Solicitar nueva contraseña**, introduce el correo y usa solo el enlace más reciente. Pulsa **Verificar enlace** y elige una contraseña única, de al menos 12 caracteres. Luego entra con el correo y la nueva contraseña.
+
+Supabase Auth guarda la contraseña y la recuperación. La tabla privada `factory_private.technicians` solo determina quién puede entrar al panel técnico. El proceso no publica contraseñas ni requiere una tabla adicional.
