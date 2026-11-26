@@ -51,3 +51,7 @@ La revocación bloquea nuevas acciones técnicas en la base. Para cerrar una ses
 4. Desde **Acceso técnico**, abre **Solicitar nueva contraseña**, introduce el correo y usa solo el enlace más reciente. Pulsa **Verificar enlace** y elige una contraseña única, de al menos 12 caracteres. Luego entra con el correo y la nueva contraseña.
 
 Supabase Auth guarda la contraseña y la recuperación. La tabla privada `factory_private.technicians` solo determina quién puede entrar al panel técnico. El proceso no publica contraseñas ni requiere una tabla adicional.
+
+### Si el correo abre el acceso técnico sin mostrar el cambio
+
+El portal también admite el correo estándar de Supabase. Para enlaces con código PKCE, solicita el correo y abre el enlace más reciente en el mismo navegador y perfil. El portal reconoce ese retorno como recuperación y muestra **Nueva contraseña** antes del panel. Si Supabase limita temporalmente los correos, espera el intervalo del proyecto antes de reintentar. Eliminar al técnico no restablece ese límite.
