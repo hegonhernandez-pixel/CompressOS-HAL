@@ -15,7 +15,7 @@
     <div class="shell bar-inner">
       <a class="wordmark" href="./"><span aria-hidden="true">◈</span><strong>CompressOS</strong> <small>Agent Factory</small></a>
       <nav aria-label="Navegación principal">
-        <a href="./">Soporte al cliente</a><a href="./laboratorio.html">Laboratorio local</a><a href="./?rol=tecnico">Acceso técnico</a>
+        <a href="./">Soporte al cliente</a><a href="./laboratorio.html">Laboratorio local</a><a href="./?rol=tecnico">Acceso técnico</a><a href="./?rol=tecnico&amp;accion=recuperar">Recuperar contraseña</a>
       </nav>
     </div>
   </header>
@@ -29,6 +29,7 @@
     <section id="visitor" class="support-layout">
       <article class="panel">
         <h2>Mensajes de soporte</h2>
+        <p class="muted">Este chat conecta tu sesión con un técnico autorizado.</p>
         <form id="name-form" class="inline">
           <label>Nombre visible <input id="visitor-name" maxlength="60" autocomplete="nickname" value="Visitante"></label>
           <button>Actualizar</button>
@@ -88,7 +89,8 @@
           <button id="logout" type="button">Cerrar sesión</button>
         </article>
         <article class="panel">
-          <div class="panel-heading"><h2 id="selected-title">Conversación</h2><button id="issue" type="button" disabled>Generar y enviar token</button></div>
+          <div class="panel-heading"><h2 id="selected-title">Conversación</h2><button id="issue" type="button" aria-describedby="issue-status" disabled>Generar y enviar token</button>
+          <p id="issue-status" class="muted">Selecciona un visitante en línea.</p></div>
           <p id="link-alert" role="status" hidden></p>
           <ul class="conversation" id="tech-messages" aria-label="Conversación"></ul>
           <form id="tech-send" class="inline">
