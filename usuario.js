@@ -205,7 +205,11 @@ function captureTechnicianLink() {
 }
 
 async function main() {
-  const technician = Boolean(byId('technician')) && new URLSearchParams(location.search).get('rol') === 'tecnico';
+  const portal = Boolean(byId('technician'));
+  const url = new URL(location.href);
+  const emailLink = portal ? captureTechnicianLink() : null;
+  const recoveryRequest = url.searchParams.get('accion') === 'recuperar';
+  const technician = portal && (emailLink || recoveryRequest || url.searchParams.get('rol') === 'tecnico');
   const status = byId('connection') || byId('lab-link');
   const quick = byId('quickstart');
   if (technician) {
@@ -224,14 +228,13 @@ async function main() {
     return;
   }
   if (quick) quick.textContent = 'FACTORY_ALLOW_SERVICE_CONTROL=0 FACTORY_ALLOW_REMOTE_DIAGNOSTICS=1 \\\npython3 agent.py --supabase-url ' + SUPABASE_URL + ' --anon-key ' + SUPABASE_ANON_KEY;
-  const emailLink = technician ? captureTechnicianLink() : null;
   await import('./supabase-client.js');
   const client = globalThis.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { storageKey: technician ? 'compressos-factory-tech' : 'compressos-factory-visitor', detectSessionInUrl:technician && !emailLink, ...(technician ? {flowType:'pkce'} : {}) }
   });
   if (technician) {
     const {initializeTechnician} = await import('./factory.js');
-    await initializeTechnician(client,emailLink);
+    await initializeTechnician(client,emailLink,recoveryRequest);
     return;
   }
   let session = unwrap(await client.auth.getSession()).session;
