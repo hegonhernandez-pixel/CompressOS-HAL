@@ -194,11 +194,14 @@ function captureTechnicianLink() {
   const hash = new URLSearchParams(url.hash.slice(1));
   const type = url.searchParams.get('type');
   const token = url.searchParams.get('token_hash');
+  const code = url.searchParams.get('code');
   const error = url.searchParams.get('error_code') || hash.get('error_code');
-  if (!token && !error) return null;
+  const legacySession = hash.get('type') === 'recovery' && hash.has('access_token') && hash.has('refresh_token')
+    ? {access_token:hash.get('access_token'),refresh_token:hash.get('refresh_token')} : null;
+  if (!token && !code && !error && !legacySession) return null;
   const clean = new URL('./?rol=tecnico', url);
   history.replaceState(history.state, '', clean);
-  return {type, token, error};
+  return {type, token, code, error, legacySession};
 }
 
 async function main() {
@@ -224,7 +227,7 @@ async function main() {
   const emailLink = technician ? captureTechnicianLink() : null;
   await import('./supabase-client.js');
   const client = globalThis.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { storageKey: technician ? 'compressos-factory-tech' : 'compressos-factory-visitor', detectSessionInUrl:technician, ...(technician ? {flowType:'pkce'} : {}) }
+    auth: { storageKey: technician ? 'compressos-factory-tech' : 'compressos-factory-visitor', detectSessionInUrl:technician && !emailLink, ...(technician ? {flowType:'pkce'} : {}) }
   });
   if (technician) {
     const {initializeTechnician} = await import('./factory.js');
