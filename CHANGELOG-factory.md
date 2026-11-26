@@ -2,6 +2,10 @@
 
 ## 2026-11-26
 
+- Restaurada la lectura de la sala, mensajes de soporte y equipos para técnicos autorizados, con aislamiento entre visitantes.
+- La sala se refresca al recibir presencia nueva y explica por qué el botón de token está deshabilitado.
+- La portada ofrece un acceso directo a recuperación y procesa devoluciones de Supabase aunque falte el parámetro de rol.
+
 - El enlace estándar de recuperación abre el formulario de contraseña tras el intercambio PKCE. El portal avisa cuando Supabase limita el correo.
 
 ## 2026-11-25
