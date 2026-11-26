@@ -188,10 +188,50 @@ export async function initializeTechnician(client, emailLink) {
   const newPassword = byId('new-password');
   status.textContent = 'Acceso protegido';
 
+  const cooldownKey = 'compressos-factory-reset-after';
   byId('reset-email').onsubmit = safe(async event => {
+    if (Date.now() < Number(sessionStorage.getItem(cooldownKey))) {
+      throw new Error('Espera un minuto antes de solicitar otro enlace. Abre el último correo en este mismo navegador.');
+    }
     const email = event.currentTarget.elements.email.value.trim();
-    authResult(await client.auth.resetPasswordForEmail(email,{redirectTo:TECHNICIAN_URL}));
-    note('Si el correo corresponde a una cuenta, recibirás un enlace nuevo. Usa el mensaje más reciente.');
+    const result = await client.auth.resetPasswordForEmail(email,{redirectTo:TECHNICIAN_URL});
+    if (result.error?.status === 429 || result.error?.code === 'over_email_send_rate_limit') {
+      sessionStorage.setItem(cooldownKey,String(Date.now()+60000));
+      throw new Error('Supabase limitó temporalmente los correos. Evita más intentos seguidos y espera a que se restablezca el límite.');
+    }
+    authResult(result);
+    sessionStorage.setItem(cooldownKey,String(Date.now()+60000));
+    note('Si el correo corresponde a una cuenta, recibirás un enlace. Abre el más reciente en este mismo navegador.');
+  });
+
+  function showRecovery() {
+    passwordLogin.hidden = google.hidden = resetRequest.hidden = verifyLink.hidden = true;
+    newPassword.hidden = false;
+    status.textContent = 'Crea una contraseña nueva';
+    newPassword.elements.password.focus();
+  }
+  async function requireTechnician(session) {
+    if (session && await authorized()) return;
+    if (session) unwrap(await client.auth.signOut({scope:'local'}));
+    throw new Error('El enlace no corresponde a una cuenta con permiso técnico.');
+  }
+  async function finishCallback(session,recovery) {
+    await requireTechnician(session);
+    if (recovery) showRecovery();
+    else open();
+  }
+  newPassword.onsubmit = safe(async event => {
+    const form = event.currentTarget;
+    if (form.elements.password.value !== form.elements.confirm.value) throw new Error('Las contraseñas deben coincidir.');
+    const {session} = unwrap(await client.auth.getSession());
+    await requireTechnician(session);
+    authResult(await client.auth.updateUser({password:form.elements.password.value}));
+    form.reset();
+    unwrap(await client.auth.signOut({scope:'local'}));
+    newPassword.hidden = true;
+    passwordLogin.hidden = google.hidden = resetRequest.hidden = false;
+    status.textContent = 'Acceso protegido';
+    note('Contraseña actualizada. Entra con tu correo y la nueva contraseña.');
   });
 
   if (emailLink?.error) note('El enlace del correo venció o ya se usó. Solicita uno nuevo si necesitas cambiar tu contraseña.');
@@ -199,43 +239,32 @@ export async function initializeTechnician(client, emailLink) {
     passwordLogin.hidden = google.hidden = resetRequest.hidden = true;
     verifyLink.hidden = false;
     verifyLink.onsubmit = safe(async () => {
-      let verified;
       try {
-        verified = authResult(await client.auth.verifyOtp({type:emailLink.type,token_hash:emailLink.token}));
+        const {session} = authResult(await client.auth.verifyOtp({type:emailLink.type,token_hash:emailLink.token}));
+        await finishCallback(session,emailLink.type === 'recovery');
       } catch (error) {
         verifyLink.hidden = true;
         passwordLogin.hidden = google.hidden = resetRequest.hidden = false;
         throw error;
       }
-      if (!verified.session || !await authorized()) {
-        await client.auth.signOut({scope:'local'});
-        location.replace(TECHNICIAN_URL);
-        return;
-      }
-      verifyLink.hidden = true;
-      if (emailLink.type !== 'recovery') {
-        open();
-        return;
-      }
-      newPassword.hidden = false;
-      status.textContent = 'Crea una contraseña nueva';
-      newPassword.elements.password.focus();
     });
-    newPassword.onsubmit = safe(async event => {
-      const form = event.currentTarget;
-      if (form.elements.password.value !== form.elements.confirm.value) throw new Error('Las contraseñas deben coincidir.');
-      authResult(await client.auth.updateUser({password:form.elements.password.value}));
-      form.reset();
-      unwrap(await client.auth.signOut({scope:'local'}));
-      newPassword.hidden = true;
-      passwordLogin.hidden = google.hidden = resetRequest.hidden = false;
-      status.textContent = 'Acceso protegido';
-      note('Contraseña actualizada. Entra con tu correo y la nueva contraseña.');
-    });
+  } else if (emailLink?.code || emailLink?.legacySession) {
+    try {
+      const result = emailLink.code ? await client.auth.exchangeCodeForSession(emailLink.code) :
+        await client.auth.setSession(emailLink.legacySession);
+      if (result.error?.code === 'flow_state_not_found' || result.error?.code === 'bad_code_verifier') {
+        throw new Error('Abre el enlace más reciente en el mismo navegador donde solicitaste la recuperación.');
+      }
+      const {session,redirectType} = authResult(result);
+      await finishCallback(session,Boolean(emailLink.legacySession) || redirectType === 'PASSWORD_RECOVERY');
+      if (byId('technician').hidden === false) return;
+    } catch (error) {
+      note(error.message);
+    }
   }
 
   const {session} = unwrap(await client.auth.getSession());
-  if (session && !emailLink?.token && !emailLink?.error) {
+  if (session && !emailLink) {
     if (await authorized()) {
       open();
       return;
