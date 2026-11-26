@@ -106,7 +106,13 @@ function panel(client) {
     if (selected !== current) return;
     device = agent || null;
     byId('selected-title').textContent = visitor?.visitor_name || 'Conversación';
-    byId('issue').disabled = !rows.some(row => row.session_id === current && ['waiting','token_sent','stopped'].includes(row.status));
+    const online = rows.some(row => row.session_id === current);
+    const canIssue = online && ['waiting','token_sent','stopped'].includes(visitor?.status);
+    byId('issue').disabled = !canIssue;
+    byId('issue-status').textContent = !visitor ? 'Selecciona un visitante en línea.' :
+      !online ? 'El visitante debe volver a abrir el portal para recibir un token.' :
+      canIssue ? 'El token se envía al chat del visitante seleccionado.' :
+      'El visitante ya tiene una solicitud de enlace o un equipo vinculado.';
     byId('tech-send').querySelector('button').disabled = !visitor;
     byId('link-alert').hidden = visitor?.status !== 'link_requested';
     byId('link-alert').textContent = visitor ? visitor.visitor_name + ' solicita enlace' : '';
@@ -158,7 +164,7 @@ function panel(client) {
   });
   byId('logout').onclick = safe(async () => { unwrap(await client.auth.signOut()); location.reload(); });
   initializeCatalog();
-  const refresh = live(client,[['factory_messages'],['factory_agents'],['factory_actions'],['factory_audit']],update);
+  const refresh = live(client,[['factory_lobby'],['factory_messages'],['factory_agents'],['factory_actions'],['factory_audit']],update);
 }
 
 const TECHNICIAN_URL = 'https://hegonhernandez-pixel.github.io/CompressOS-HAL/?rol=tecnico';
@@ -170,7 +176,7 @@ function authResult(result) {
   return unwrap(result);
 }
 
-export async function initializeTechnician(client, emailLink) {
+export async function initializeTechnician(client, emailLink, recoveryRequest = false) {
   const login = byId('technician-login');
   const status = byId('connection');
   const authorized = async () => unwrap(await client.rpc('factory_is_tech'));
@@ -184,6 +190,7 @@ export async function initializeTechnician(client, emailLink) {
   const passwordLogin = byId('login');
   const google = byId('login-google');
   const resetRequest = byId('reset-request');
+  if (recoveryRequest) resetRequest.open = true;
   const verifyLink = byId('verify-email-link');
   const newPassword = byId('new-password');
   status.textContent = 'Acceso protegido';
@@ -264,7 +271,7 @@ export async function initializeTechnician(client, emailLink) {
   }
 
   const {session} = unwrap(await client.auth.getSession());
-  if (session && !emailLink) {
+  if (session && !emailLink && !recoveryRequest) {
     if (await authorized()) {
       open();
       return;
