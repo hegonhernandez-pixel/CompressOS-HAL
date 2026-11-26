@@ -1,5 +1,9 @@
 # Historial de CompressOS Agent Factory
 
+## 2026-11-26
+
+- El enlace estándar de recuperación abre el formulario de contraseña tras el intercambio PKCE. El portal avisa cuando Supabase limita el correo.
+
 ## 2026-11-25
 
 - Añadidos solicitud de recuperación, verificación de enlace y formulario para crear una contraseña técnica nueva.
