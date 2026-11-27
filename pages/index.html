@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Checklist de diagnóstico y soporte de Compresso Studio Linux">
+  <title>Compresso Studio Linux · Checklist de soporte</title>
+  <style>
+:root { color-scheme: dark; color: #eef5f2; background: #101b1c; font: 100%/1.6 system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+header { border-bottom: 1px solid #48645e; padding: 1rem max(1rem, calc((100% - 52rem) / 2)); font-weight: 650; }
+main { width: min(52rem, calc(100% - 2rem)); margin: clamp(2rem, 5vw, 4rem) auto; }
+a { color: #a9efd0; }
+h1 { margin: 0; font-size: clamp(2.25rem, 6vw, 4.25rem); line-height: 1.06; letter-spacing: -.05em; }
+h2, h3 { line-height: 1.25; margin: 0 0 .6rem; }
+nav { display: flex; gap: .75rem; flex-wrap: wrap; margin: 1.5rem 0; }
+nav a { padding: .45rem .75rem; border: 1px solid #648278; border-radius: .45rem; text-decoration: none; }
+section { margin: 1.25rem 0; padding: clamp(1rem, 3vw, 1.75rem); background: #172726; border: 1px solid #39524d; border-radius: .75rem; }
+.checklist { list-style: none; padding: 0; }
+label { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: .65rem; }
+label input { accent-color: #a9efd0; }
+li + li, dt:not(:first-child) { margin-top: .65rem; }
+dd { margin-inline-start: 0; }
+dt { font-weight: 650; }
+code { color: #c3f2dd; }
+:focus-visible { outline: 3px solid #fce192; outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <header><a href="../" aria-label="Volver al portal de soporte">Compresso Studio Linux</a></header>
+  <main>
+    <h1>Checklist de revisión</h1>
+    <p>Usa esta guía para diagnosticar Compresso Studio en Linux Mint y documentar cada cambio con evidencia.</p>
+    <nav aria-label="En esta página">
+      <a href="#diagnostico">Diagnóstico</a>
+      <a href="#soporte">Soporte</a>
+      <a href="#handoff">Handoff</a>
+    </nav>
+
+    <section id="diagnostico">
+      <h2>Diagnóstico y verificación</h2>
+      <ul class="checklist">
+        <li><label><input type="checkbox"> <span>Registrar fecha, equipo, distribución, kernel y síntoma reproducible.</span></label></li>
+        <li><label><input type="checkbox"> <span>Separar RAM, swap y disco. Capturar <code>free -h</code>, <code>swapon --show</code>, <code>df -hT</code>, <code>df -i</code> y <code>uname -r</code>. Usar <code>du -x</code> sobre el montaje afectado y medir kernels antiguos, cachés y descargas cuando corresponda.</span></label></li>
+        <li><label><input type="checkbox"> <span>Comprobar el proceso, el puerto local 8780, la respuesta HTTP, la ruta <code>#/</code> del navegador y las solicitudes al backend.</span></label></li>
+        <li><label><input type="checkbox"> <span>Registrar repositorio, rama y commit. Trazar el arranque, la configuración, la interfaz y el backend con archivos y pruebas.</span></label></li>
+        <li><label><input type="checkbox"> <span>Documentar evidencia, riesgo y reversión. Obtener confirmación explícita antes de cualquier limpieza.</span></label></li>
+        <li><label><input type="checkbox"> <span>Aplicar el cambio mínimo autorizado, repetir la prueba original y anotar el resultado y el PR si existe.</span></label></li>
+      </ul>
+    </section>
+
+    <section id="soporte">
+      <h2>Canales de soporte</h2>
+      <dl>
+        <dt>Técnico y cliente</dt>
+        <dd>Usa el hilo privado del equipo en Agent Factory. Si no hay un técnico disponible, se agendará una consulta por la web o por el bot de la app, según disponibilidad.</dd>
+        <dt>Coordinación interna</dt>
+        <dd>Usa la sala interna de Factory y Arcade para la coordinación del equipo.</dd>
+      </dl>
+      <p>Para solicitar una consulta por la web, indica tu horario y zona horaria en la conversación de soporte. Espera la confirmación de la cita.</p>
+    </section>
+
+    <section id="handoff">
+      <h2>Handoff</h2>
+      <p>Registra fecha, equipo, pasos para reproducir, rama, commit, evidencia depurada, resultado de las pruebas, riesgos, decisión y siguiente paso.</p>
+      <h3>Recomendaciones</h3>
+      <ul>
+        <li>Prueba el flujo con dos equipos y verifica que cada mensaje quede en su canal.</li>
+        <li>Confirma en el Mint la primera señal de telemetría antes de cerrar la revisión.</li>
+        <li>Conserva tokens, historial de mensajes y evidencias de clientes en el entorno privado de Factory.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
